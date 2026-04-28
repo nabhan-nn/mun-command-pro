@@ -1,5 +1,5 @@
 flask
 firebase-admin
-google-generativeai
+google-genai
 python-dotenv
 cloudinary
