@@ -17,7 +17,9 @@ app = Flask(__name__)
 gemini_client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
 # Connect to Firebase
-cred = credentials.Certificate('firebase-credentials.json')
+import json
+firebase_creds = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
+cred = credentials.Certificate(firebase_creds)
 firebase_admin.initialize_app(cred, {'databaseURL': os.getenv('FIREBASE_DATABASE_URL')})
 
 # Connect to Cloudinary for file storage
