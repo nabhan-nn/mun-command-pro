@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chair — MUN Command Pro</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body class="app-page">
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo">⬡ MUN Command Pro</span>
+    </div>
+    <div class="room-badge">
+      <div class="room-code" id="room-code-display">—</div>
+      <div class="room-label">Room code</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showTab('speakers', this)">Speakers</div>
+      <div class="nav-item" onclick="showTab('motions', this)">Motions <span class="nav-badge" id="badge-motions"></span></div>
+      <div class="nav-item" onclick="showTab('documents', this)">Documents <span class="nav-badge" id="badge-documents"></span></div>
+      <div class="nav-item" onclick="showTab('chits', this)">Chits <span class="nav-badge" id="badge-chits"></span></div>
+      <div class="nav-item" onclick="showTab('delegates', this)">Delegates</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-name" id="chair-name-display">—</div>
+      <div class="sidebar-cmte" id="committee-display">—</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title" id="page-title">Speakers</div>
+      <div class="topbar-status"><span class="status-dot"></span> Session active</div>
+    </header>
+
+    <!-- SPEAKERS TAB -->
+    <section class="tab-content active" id="tab-speakers">
+      <div class="two-col">
+
+        <div class="panel">
+          <div class="panel-header"><h3>Current speaker</h3>
+            <button class="btn-outline" onclick="nextSpeakerBtn()">Next →</button>
+          </div>
+          <div class="speaker-display">
+            <div class="speaker-name" id="current-speaker-name">No speaker selected</div>
+            <div class="timer" id="timer-display">01:30</div>
+            <div class="timer-btns">
+              <button class="btn-outline" onclick="startTimer()">▶ Start</button>
+              <button class="btn-outline" onclick="pauseTimer()">⏸ Pause</button>
+              <button class="btn-outline" onclick="resetTimer()">↺ Reset</button>
+            </div>
+            <div class="timer-set">
+              <label>Speaking time (seconds)</label>
+              <input type="number" id="speaker-time" value="90" min="30" max="300" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3>Queue</h3>
+            <button class="btn-solid" onclick="openAddSpeaker()">+ Add</button>
+          </div>
+          <div class="list-area" id="speakers-queue">
+            <div class="empty-state">No speakers queued</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h3>POI requests</h3></div>
+        <div class="list-area" id="poi-list">
+          <div class="empty-state">No POI requests</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MOTIONS TAB -->
+    <section class="tab-content" id="tab-motions">
+      <div class="panel">
+        <div class="panel-header"><h3>Pending motions</h3>
+          <button class="btn-solid" onclick="openAddMotion()">+ Add</button>
+        </div>
+        <div class="list-area" id="motions-list">
+          <div class="empty-state">No motions submitted</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOCUMENTS TAB -->
+    <section class="tab-content" id="tab-documents">
+      <div class="panel">
+        <div class="panel-header"><h3>Submitted documents</h3>
+          <span class="panel-sub">Chair sees all — download deletes from database</span>
+        </div>
+        <div class="list-area" id="documents-list">
+          <div class="empty-state">No documents submitted</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHITS TAB -->
+    <section class="tab-content" id="tab-chits">
+      <div class="panel">
+        <div class="panel-header"><h3>All chits</h3>
+          <span class="panel-sub">Chair sees all</span>
+        </div>
+        <div class="list-area" id="chits-list">
+          <div class="empty-state">No chits yet</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DELEGATES TAB -->
+    <section class="tab-content" id="tab-delegates">
+      <div class="panel">
+        <div class="panel-header"><h3>Connected delegates</h3>
+          <span class="panel-sub" id="delegate-count">0 online</span>
+        </div>
+        <div class="delegates-grid" id="delegates-grid">
+          <div class="empty-state">No delegates connected</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ADD SPEAKER MODAL -->
+<div class="modal-overlay" id="modal-add-speaker">
+  <div class="modal">
+    <h3>Add to speakers list</h3>
+    <input type="text" id="speaker-input" placeholder="Country name" />
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal('modal-add-speaker')">Cancel</button>
+      <button class="btn-solid" onclick="addSpeaker()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MOTION MODAL -->
+<div class="modal-overlay" id="modal-add-motion">
+  <div class="modal">
+    <h3>Add motion</h3>
+    <select id="motion-type-chair">
+      <option value="mod">Moderated Caucus</option>
+      <option value="unmod">Unmoderated Caucus</option>
+      <option value="challenge">Challenge</option>
+      <option value="suspension">Suspension of Debate</option>
+      <option value="adjourn">Adjournment</option>
+      <option value="extend">Extension of Speakers List</option>
+      <option value="order">Point of Order</option>
+    </select>
+    <input type="text" id="motion-country-chair" placeholder="Proposed by (country)" />
+    <input type="text" id="motion-details-chair" placeholder="Details (e.g. 10 min, 1 min speaking)" />
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal('modal-add-motion')">Cancel</button>
+      <button class="btn-solid" onclick="addMotionChair()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/static/app.js"></script>
+<script type="module" src="/static/chair.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MUN Command Pro</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body class="landing">
+  <div class="landing-container">
+    <div class="landing-logo">⬡ MUN Command Pro</div>
+    <p class="landing-sub">Real-time session management for chairs and delegates</p>
+
+    <div class="landing-cards">
+
+      <div class="card">
+        <h2>I am a Chair</h2>
+        <p>Create and manage a committee session</p>
+        <input type="text" id="chair-name" placeholder="Your name" />
+        <input type="text" id="committee" placeholder="Committee (e.g. UNSC)" />
+        <button onclick="createRoom()">Create Session</button>
+        <div id="created-code" style="display:none">
+          <p>Your room code — share this with delegates:</p>
+          <div class="code-display" id="code-display"></div>
+          <button onclick="goToChair()">Enter Dashboard</button>
+        </div>
+      </div>
+
+      <div class="card">
+  <h2>I am a Delegate</h2>
+  <p>Join an existing session</p>
+  <input type="text" id="room-code" placeholder="Room code (e.g. MUN-4829)" />
+  <input type="text" id="country" placeholder="Your country" />
+  <button onclick="joinRoom()">Join Session</button>
+  <div class="error-msg" id="join-error"></div>
+</div>

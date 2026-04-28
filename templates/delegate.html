@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delegate — MUN Command Pro</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body class="app-page">
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo">⬡ MUN Command Pro</span>
+    </div>
+    <div class="room-badge">
+      <div class="room-code" id="del-room-code">—</div>
+      <div class="room-label">Room code</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showTab('session', this)">Session</div>
+      <div class="nav-item" onclick="showTab('chits', this)">Chits <span class="nav-badge" id="badge-inbox"></span></div>
+      <div class="nav-item" onclick="showTab('documents', this)">Documents</div>
+      <div class="nav-item" onclick="showTab('amendments', this)">Amendments</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-name" id="del-country-display">—</div>
+      <div class="sidebar-cmte" id="del-code-display">—</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title" id="del-page-title">Session</div>
+      <div class="topbar-status"><span class="status-dot"></span> Connected</div>
+    </header>
+
+    <!-- SESSION TAB -->
+    <section class="tab-content active" id="tab-session">
+      <div class="two-col">
+
+        <div class="panel">
+          <div class="panel-header"><h3>Current speaker</h3></div>
+          <div class="speaker-display">
+            <div class="speaker-name" id="del-current-speaker">Waiting for chair...</div>
+            <div class="timer" id="del-timer">—</div>
+            <button class="btn-outline" style="margin-top:12px" onclick="raisePOI()">Raise POI</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3>Speakers queue</h3></div>
+          <div class="list-area" id="del-speakers-queue">
+            <div class="empty-state">No speakers queued</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h3>Active motions</h3></div>
+        <div class="list-area" id="del-motions-display">
+          <div class="empty-state">No active motions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHITS TAB -->
+    <section class="tab-content" id="tab-chits">
+      <div class="two-col">
+
+        <div class="panel">
+          <div class="panel-header"><h3>Send a chit</h3></div>
+          <div class="compose-area">
+            <select id="chit-recipient">
+              <option value="Chair">Chair</option>
+            </select>
+            <textarea id="chit-text" placeholder="Write your message..." rows="4"></textarea>
+            <div class="chit-warning" id="chit-warning" style="display:none"></div>
+            <button class="btn-solid" onclick="sendChit()">Send</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3>Inbox</h3></div>
+          <div class="list-area" id="del-inbox">
+            <div class="empty-state">No chits received</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel" style="margin-top:12px">
+        <div class="panel-header"><h3>Sent</h3></div>
+        <div class="list-area" id="del-sent">
+          <div class="empty-state">No chits sent</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOCUMENTS TAB -->
+    <section class="tab-content" id="tab-documents">
+      <div class="two-col">
+
+        <div class="panel">
+          <div class="panel-header"><h3>Upload a document</h3></div>
+          <div class="compose-area">
+            <select id="doc-type">
+              <option value="Position Paper">Position Paper</option>
+              <option value="Draft Resolution">Draft Resolution</option>
+              <option value="Working Paper">Working Paper</option>
+            </select>
+            <div class="file-upload-area">
+              <input type="file" id="doc-file" accept=".pdf" />
+              <label for="doc-file">Choose PDF file</label>
+            </div>
+            <div class="ai-preview" id="doc-ai-preview" style="display:none"></div>
+            <button class="btn-solid" onclick="uploadDocument()">Submit Document</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3>My submissions</h3></div>
+          <div class="list-area" id="del-my-docs">
+            <div class="empty-state">No documents submitted</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- AMENDMENTS TAB -->
+    <section class="tab-content" id="tab-amendments">
+      <div class="panel">
+        <div class="panel-header"><h3>Submit an amendment</h3></div>
+        <div class="compose-area">
+          <input type="text" id="amend-resolution" placeholder="Resolution reference (e.g. BR/GER-01)" />
+          <input type="text" id="amend-clause" placeholder="Clause number (e.g. Operative clause 3)" />
+          <select id="amend-type">
+            <option value="Modify">Modify clause</option>
+            <option value="Add">Add clause</option>
+            <option value="Delete">Delete clause</option>
+          </select>
+          <textarea id="amend-text" placeholder="Proposed new text..." rows="4"></textarea>
+          <button class="btn-solid" onclick="submitAmendment()">Submit Amendment</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:12px">
+        <div class="panel-header"><h3>Submitted amendments</h3></div>
+        <div class="list-area" id="del-amendments-list">
+          <div class="empty-state">No amendments submitted</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script type="module" src="/static/app.js"></script>
+<script type="module" src="/static/delegate.js"></script>
+</body>
+</html>
