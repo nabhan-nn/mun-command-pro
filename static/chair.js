@@ -1,4 +1,4 @@
-import { db, fbStorage } from './app.js';
+import { db } from './app.js';
 import { ref, onValue, push, set, remove }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { ref as sRef, deleteObject }
