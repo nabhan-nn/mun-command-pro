@@ -143,14 +143,19 @@ def ai_score():
     try:
         prompt = (
             'You are an AI detection tool. '
-            'Return ONLY valid JSON with key ai_probability as integer 0 to 100. '
+            'Analyse this text and return ONLY a JSON object with no markdown, no explanation, nothing else. '
+            'Format: {"ai_probability": 85} where the number is 0-100. '
+            'Higher means more likely AI written. '
             'Text: ' + text
         )
         response = gemini_client.models.generate_content(
             model='gemini-1.5-flash',
             contents=prompt
         )
-        result = json.loads(response.text)
+        # Strip markdown code blocks if Gemini wraps in ```json
+        raw = response.text.strip()
+        raw = raw.replace('```json', '').replace('```', '').strip()
+        result = json.loads(raw)
         return jsonify(result)
     except Exception:
         return jsonify({'ai_probability': heuristic(text)})

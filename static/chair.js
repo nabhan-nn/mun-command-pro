@@ -210,8 +210,9 @@ window.removeMotion = async function(id) {
 // ─── CHITS ───────────────────────────────
 function renderChits(chits) {
   const list = document.getElementById('chits-list');
-  if (!chits.length) { list.innerHTML = '<div class="empty-state">No chits</div>'; return; }
-  list.innerHTML = chits.map(c => `
+  const unread = chits.filter(c => !c.readByChair);
+  if (!unread.length) { list.innerHTML = '<div class="empty-state">No chits</div>'; return; }
+  list.innerHTML = unread.map(c => `
     <div class="chit-item" ${c.isAmendment ? 'style="border-left:3px solid #534AB7"' : ''}>
       <div class="chit-header">
         <span class="chit-route">
@@ -227,10 +228,12 @@ function renderChits(chits) {
       </div>
     </div>
   `).join('');
+  updateBadge('badge-chits', unread.length);
 }
 
 window.markChit = async function(id) {
-  await remove(ref(db, 'rooms/' + roomCode + '/chits/' + id));
+  // Don't delete — just mark as read so delegate still sees it
+  await set(ref(db, 'rooms/' + roomCode + '/chits/' + id + '/readByChair'), true);
 }
 
 // ─── DOCUMENTS ───────────────────────────
