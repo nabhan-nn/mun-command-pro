@@ -212,14 +212,17 @@ function renderChits(chits) {
   const list = document.getElementById('chits-list');
   if (!chits.length) { list.innerHTML = '<div class="empty-state">No chits</div>'; return; }
   list.innerHTML = chits.map(c => `
-    <div class="chit-item">
+    <div class="chit-item" ${c.isAmendment ? 'style="border-left:3px solid #534AB7"' : ''}>
       <div class="chit-header">
-        <span class="chit-route">From <strong>${c.from}</strong> → <strong>${c.to}</strong></span>
+        <span class="chit-route">
+          ${c.isAmendment ? '<span class="row-tag tag-pp">Amendment</span> ' : ''}
+          From <strong>${c.from}</strong> → <strong>${c.to}</strong>
+        </span>
         <span class="chit-time">${formatTimestamp(c.sentAt)}</span>
       </div>
       <div class="chit-body">${c.text}</div>
       <div class="chit-footer">
-        <span class="ai-badge ${aiClass(c.aiScore)}">AI: ${c.aiScore}%</span>
+        ${c.isAmendment ? '' : `<span class="ai-badge ${aiClass(c.aiScore)}">AI: ${c.aiScore}%</span>`}
         <button class="mark-btn" onclick="markChit('${c.id}')">Mark as read</button>
       </div>
     </div>
@@ -252,18 +255,29 @@ function renderDocuments(docs) {
 }
 
 window.downloadDoc = async function(docId, publicId, downloadURL, fileName) {
-  const a = document.createElement('a');
-  a.href = downloadURL;
-  a.download = fileName;
-  a.click();
-  setTimeout(async () => {
-    await fetch('/api/delete-file', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ public_id: publicId })
-    });
-    await remove(ref(db, 'rooms/' + roomCode + '/documents/' + docId));
-  }, 1000);
+  try {
+    const response = await fetch(downloadURL);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    setTimeout(async () => {
+      await fetch('/api/delete-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_id: publicId })
+      });
+      await remove(ref(db, 'rooms/' + roomCode + '/documents/' + docId));
+    }, 1000);
+  } catch (e) {
+    alert('Download failed: ' + e.message);
+  }
 }
 
 // ─── DELEGATES ───────────────────────────

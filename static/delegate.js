@@ -229,7 +229,15 @@ window.uploadDocument = async function() {
     });
 
     fileInput.value = '';
-    alert('Document uploaded successfully');
+const preview = document.getElementById('doc-ai-preview');
+preview.style.display = 'block';
+preview.innerHTML = `
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <span>📄 ${file.name}</span>
+    <span class="ai-badge ${aiScoreClass(aiScore)}">AI: ${aiScore}%</span>
+    <button class="mx" onclick="clearUploadPreview()">✕</button>
+  </div>
+`;
   } catch (e) {
     alert('Upload error: ' + e.message);
   } finally {
@@ -264,18 +272,24 @@ window.submitAmendment = async function() {
 
   if (!resolution || !text) { alert('Fill in all fields'); return; }
 
-  await push(ref(db, 'rooms/' + roomCode + '/documents'), {
-    country,
-    type: 'Amendment',
-    fileName: `Amendment to ${resolution} — ${clause}`,
-    amendType: type,
-    text,
+  // Send as a chit to the chair with amendment details
+  await push(ref(db, 'rooms/' + roomCode + '/chits'), {
+    from: country,
+    to: 'Chair',
+    text: `[AMENDMENT — ${type}] Resolution: ${resolution} | Clause: ${clause} | Proposed text: ${text}`,
     aiScore: 0,
-    uploadedAt: Date.now()
+    isAmendment: true,
+    amendType: type,
+    sentAt: Date.now()
   });
 
   document.getElementById('amend-resolution').value = '';
   document.getElementById('amend-clause').value = '';
   document.getElementById('amend-text').value = '';
-  alert('Amendment submitted');
+  alert('Amendment submitted to chair');
+}
+window.clearUploadPreview = function() {
+  document.getElementById('doc-ai-preview').style.display = 'none';
+  document.getElementById('doc-ai-preview').innerHTML = '';
+  document.getElementById('doc-file').value = '';
 }
