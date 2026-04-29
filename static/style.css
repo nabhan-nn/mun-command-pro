@@ -470,6 +470,28 @@ select { cursor: pointer; }
   padding: 20px;
   text-align: center;
 }
+/* ── THREADS ── */
+.conversation-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 0.5px solid #f0f0f0;
+  cursor: pointer;
+}
+.conversation-item:hover { background: #f7f6f3; }
+.conversation-item:last-child { border-bottom: none; }
+.conv-name { font-size: 13px; font-weight: 500; color: #111; }
+.conv-preview { font-size: 11px; color: #888; margin-top: 2px; }
+.conv-badge { background: #534AB7; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 10px; }
+
+.thread-messages { padding: 12px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.thread-msg { max-width: 75%; padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+.thread-msg.sent { align-self: flex-end; background: #EEEDFE; color: #111; border-bottom-right-radius: 2px; }
+.thread-msg.received { align-self: flex-start; background: #f7f6f3; color: #111; border-bottom-left-radius: 2px; }
+.thread-msg-meta { font-size: 10px; color: #aaa; margin-top: 3px; }
+.thread-reply { padding: 12px; border-top: 0.5px solid #e0e0e0; display: flex; gap: 8px; align-items: flex-end; }
+.thread-reply textarea { flex: 1; margin: 0; height: 60px; }
 .stat-number { font-size: 36px; font-weight: 500; color: #111; }
 .stat-label { font-size: 12px; color: #888; margin-top: 4px; }
 

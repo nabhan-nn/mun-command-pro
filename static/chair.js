@@ -210,25 +210,42 @@ window.removeMotion = async function(id) {
 // ─── CHITS ───────────────────────────────
 function renderChits(chits) {
   const list = document.getElementById('chits-list');
-  const unread = chits.filter(c => !c.readByChair);
-  if (!unread.length) { list.innerHTML = '<div class="empty-state">No chits</div>'; return; }
-  list.innerHTML = unread.map(c => `
-    <div class="chit-item" ${c.isAmendment ? 'style="border-left:3px solid #534AB7"' : ''}>
-      <div class="chit-header">
-        <span class="chit-route">
-          ${c.isAmendment ? '<span class="row-tag tag-pp">Amendment</span> ' : ''}
-          From <strong>${c.from}</strong> → <strong>${c.to}</strong>
-        </span>
-        <span class="chit-time">${formatTimestamp(c.sentAt)}</span>
-      </div>
-      <div class="chit-body">${c.text}</div>
-      <div class="chit-footer">
-        ${c.isAmendment ? '' : `<span class="ai-badge ${aiClass(c.aiScore)}">AI: ${c.aiScore}%</span>`}
-        <button class="mark-btn" onclick="markChit('${c.id}')">Mark as read</button>
-      </div>
+  const visible = chits.filter(c => !c.readByChair);
+  if (!visible.length) { list.innerHTML = '<div class="empty-state">No chits</div>'; return; }
+
+  // Group by conversation pair
+  const threads = {};
+  visible.forEach(c => {
+    const key = [c.from, c.to].sort().join(' ↔ ');
+    if (!threads[key]) threads[key] = { label: key, msgs: [] };
+    threads[key].msgs.push(c);
+  });
+
+  Object.values(threads).forEach(t => t.msgs.sort((a, b) => a.sentAt - b.sentAt));
+
+  list.innerHTML = Object.values(threads).map(t => `
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:500;color:#534AB7;padding:6px 12px;background:#EEEDFE;border-radius:6px;margin-bottom:4px">${t.label}</div>
+      ${t.msgs.map(c => `
+        <div class="chit-item" ${c.isAmendment ? 'style="border-left:3px solid #534AB7"' : ''}>
+          <div class="chit-header">
+            <span class="chit-route">
+              ${c.isAmendment ? '<span class="row-tag tag-pp">Amendment</span> ' : ''}
+              <strong>${c.from}</strong> → <strong>${c.to}</strong>
+            </span>
+            <span class="chit-time">${formatTimestamp(c.sentAt)}</span>
+          </div>
+          <div class="chit-body">${c.text}</div>
+          <div class="chit-footer">
+            ${!c.isAmendment ? `<span class="ai-badge ${aiClass(c.aiScore)}">AI: ${c.aiScore}%</span>` : ''}
+            <button class="mark-btn" onclick="markChit('${c.id}')">Mark as read</button>
+          </div>
+        </div>
+      `).join('')}
     </div>
   `).join('');
-  updateBadge('badge-chits', unread.length);
+
+  updateBadge('badge-chits', visible.length);
 }
 
 window.markChit = async function(id) {
@@ -259,18 +276,23 @@ function renderDocuments(docs) {
 
 window.downloadDoc = async function(docId, publicId, downloadURL, fileName) {
   try {
-    // Fetch the file first
-    const response = await fetch(downloadURL);
-    
+    const response = await fetch('/api/download-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        url: downloadURL, 
+        filename: fileName,
+        public_id: publicId 
+      })
+    });
+
     if (!response.ok) {
-      alert('File not found — it may have already been downloaded.');
-      await remove(ref(db, 'rooms/' + roomCode + '/documents/' + docId));
+      const err = await response.json();
+      alert('Download failed: ' + (err.error || 'Unknown error'));
       return;
     }
-    
+
     const blob = await response.blob();
-    
-    // Only delete AFTER blob is fully received
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -280,16 +302,11 @@ window.downloadDoc = async function(docId, publicId, downloadURL, fileName) {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
 
-    // Now safe to delete since blob is already in memory
-    await fetch('/api/delete-file', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ public_id: publicId })
-    });
+    // Remove from Firebase
     await remove(ref(db, 'rooms/' + roomCode + '/documents/' + docId));
 
   } catch (e) {
-    alert('Download failed: ' + e.message);
+    alert('Download error: ' + e.message);
   }
 }
 

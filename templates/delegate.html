@@ -73,7 +73,7 @@
       <div class="two-col">
 
         <div class="panel">
-          <div class="panel-header"><h3>Send a chit</h3></div>
+          <div class="panel-header"><h3>New chit</h3></div>
           <div class="compose-area">
             <select id="chit-recipient">
               <option value="Chair">Chair</option>
@@ -85,18 +85,24 @@
         </div>
 
         <div class="panel">
-          <div class="panel-header"><h3>Inbox</h3></div>
-          <div class="list-area" id="del-inbox">
-            <div class="empty-state">No chits received</div>
+          <div class="panel-header"><h3>Conversations</h3></div>
+          <div class="list-area" id="del-conversations">
+            <div class="empty-state">No messages yet</div>
           </div>
         </div>
 
       </div>
 
-      <div class="panel" style="margin-top:12px">
-        <div class="panel-header"><h3>Sent</h3></div>
-        <div class="list-area" id="del-sent">
-          <div class="empty-state">No chits sent</div>
+      <!-- Thread view -->
+      <div class="panel" id="thread-panel" style="margin-top:12px;display:none">
+        <div class="panel-header">
+          <h3 id="thread-title">Thread</h3>
+          <button class="btn-sm" onclick="closeThread()">✕ Close</button>
+        </div>
+        <div class="thread-messages" id="thread-messages"></div>
+        <div class="thread-reply">
+          <textarea id="thread-reply-text" placeholder="Reply..." rows="2"></textarea>
+          <button class="btn-solid" onclick="sendReply()">Reply</button>
         </div>
       </div>
     </section>

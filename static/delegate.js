@@ -7,6 +7,8 @@ const country = sessionStorage.getItem('mun_country');
 const delCode = sessionStorage.getItem('mun_code');
 const committee = sessionStorage.getItem('mun_committee');
 
+let currentThread = null;
+
 window.addEventListener('DOMContentLoaded', () => {
   if (!roomCode || sessionStorage.getItem('mun_role') !== 'delegate') {
     window.location.href = '/';
@@ -56,51 +58,63 @@ window.addEventListener('DOMContentLoaded', () => {
     `).join('');
   });
 
-  // Inbox — chits addressed to this delegate
+  // Chit conversations — WhatsApp style
   onValue(ref(db, 'rooms/' + roomCode + '/chits'), snap => {
     const chits = snap.val() || {};
-    const inbox = Object.entries(chits)
-      .map(([id, d]) => ({id, ...d}))
-      .filter(c => c.to === country);
-    const sent = Object.entries(chits)
-      .map(([id, d]) => ({id, ...d}))
-      .filter(c => c.from === country);
+    const allChits = Object.entries(chits).map(([id, d]) => ({id, ...d}));
 
-    const inboxEl = document.getElementById('del-inbox');
-    const sentEl = document.getElementById('del-sent');
+    // My chits = sent or received by me
+    const myChits = allChits.filter(c => c.from === country || c.to === country);
 
-    inboxEl.innerHTML = inbox.length ? inbox.map(c => `
-      <div class="chit-item">
-        <div class="chit-header">
-          <span class="chit-route">From <strong>${c.from}</strong></span>
-          <span class="chit-time">${formatTimestamp(c.sentAt)}</span>
-        </div>
-        <div class="chit-body">${c.text}</div>
-        <div class="chit-footer">
-          <span class="ai-badge ${aiClass(c.aiScore)}">AI: ${c.aiScore}%</span>
-          <button class="mark-btn" onclick="markChit('${c.id}')">Mark</button>
-        </div>
-      </div>
-    `).join('') : '<div class="empty-state">No chits received</div>';
+    // Group into conversations
+    const conversations = {};
+    myChits.forEach(c => {
+      const other = c.from === country ? c.to : c.from;
+      if (!conversations[other]) conversations[other] = [];
+      conversations[other].push(c);
+    });
 
-    sentEl.innerHTML = sent.length ? sent.map(c => `
-      <div class="chit-item">
-        <div class="chit-header">
-          <span class="chit-route">To <strong>${c.to}</strong></span>
-          <span class="chit-time">${formatTimestamp(c.sentAt)}</span>
-        </div>
-        <div class="chit-body">${c.text}</div>
-        <div class="chit-footer">
-          <span class="ai-badge ${aiClass(c.aiScore)}">AI: ${c.aiScore}%</span>
-        </div>
-      </div>
-    `).join('') : '<div class="empty-state">No chits sent</div>';
+    // Sort each conversation by time
+    Object.keys(conversations).forEach(k => {
+      conversations[k].sort((a, b) => a.sentAt - b.sentAt);
+    });
 
+    // Render conversation list
+    const convList = document.getElementById('del-conversations');
+    const convKeys = Object.keys(conversations);
+    if (!convKeys.length) {
+      convList.innerHTML = '<div class="empty-state">No messages yet</div>';
+    } else {
+      convList.innerHTML = convKeys.map(other => {
+        const msgs = conversations[other];
+        const last = msgs[msgs.length - 1];
+        const unread = msgs.filter(m => m.to === country && !m.readByDelegate).length;
+        return `
+          <div class="conversation-item" onclick="openThread('${other}')">
+            <div>
+              <div class="conv-name">${other}</div>
+              <div class="conv-preview">${last.text.substring(0, 50)}${last.text.length > 50 ? '...' : ''}</div>
+            </div>
+            ${unread > 0 ? `<span class="conv-badge">${unread}</span>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Update thread view if open
+    if (currentThread && conversations[currentThread]) {
+      renderThread(currentThread, conversations[currentThread]);
+    }
+
+    // Badge
+    const totalUnread = myChits.filter(m => m.to === country && !m.readByDelegate).length;
     const badge = document.getElementById('badge-inbox');
     if (badge) {
-      badge.textContent = inbox.length;
-      badge.classList.toggle('visible', inbox.length > 0);
+      badge.textContent = totalUnread;
+      badge.classList.toggle('visible', totalUnread > 0);
     }
+
+    window._conversations = conversations;
   });
 
   // Motions
@@ -138,7 +152,7 @@ window.addEventListener('DOMContentLoaded', () => {
     `).join('') : '<div class="empty-state">No documents submitted</div>';
   });
 
-  // File input preview — shows filename and X button when file selected
+  // File input preview
   const docFileInput = document.getElementById('doc-file');
   if (docFileInput) {
     docFileInput.addEventListener('change', function() {
@@ -158,7 +172,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ── ROOM CLOSED LISTENER ──
+  // Room closed listener
   onValue(ref(db, 'rooms/' + roomCode), snap => {
     if (!snap.exists()) {
       alert('This session has been closed by the chair.');
@@ -167,6 +181,65 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+// ─── THREAD FUNCTIONS ────────────────────
+window.openThread = function(other) {
+  currentThread = other;
+  document.getElementById('thread-panel').style.display = 'block';
+  document.getElementById('thread-title').textContent = other;
+  const msgs = window._conversations?.[other] || [];
+  renderThread(other, msgs);
+
+  // Mark as read
+  msgs.filter(m => m.to === country && !m.readByDelegate).forEach(async m => {
+    await set(ref(db, 'rooms/' + roomCode + '/chits/' + m.id + '/readByDelegate'), true);
+  });
+}
+
+window.closeThread = function() {
+  currentThread = null;
+  document.getElementById('thread-panel').style.display = 'none';
+}
+
+function renderThread(other, msgs) {
+  const container = document.getElementById('thread-messages');
+  container.innerHTML = msgs.map(m => {
+    const isSent = m.from === country;
+    return `
+      <div>
+        <div class="thread-msg ${isSent ? 'sent' : 'received'}">
+          ${m.text}
+          <div class="thread-msg-meta">
+            ${m.aiScore !== undefined && m.aiScore > 0 ? `AI: ${m.aiScore}% · ` : ''}${formatTimestamp(m.sentAt)}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+window.sendReply = async function() {
+  if (!currentThread) return;
+  const text = document.getElementById('thread-reply-text').value.trim();
+  if (!text) return;
+
+  if (containsProfanity(text)) {
+    alert('Message blocked — inappropriate language.');
+    return;
+  }
+
+  const aiScore = await getAiScore(text);
+  await push(ref(db, 'rooms/' + roomCode + '/chits'), {
+    from: country,
+    to: currentThread,
+    text,
+    aiScore,
+    sentAt: Date.now()
+  });
+
+  document.getElementById('thread-reply-text').value = '';
+}
 
 // ─── SEND CHIT ───────────────────────────
 window.sendChit = async function() {
@@ -186,7 +259,6 @@ window.sendChit = async function() {
   }
 
   warningEl.style.display = 'none';
-
   const aiScore = await getAiScore(text);
 
   await push(ref(db, 'rooms/' + roomCode + '/chits'), {
@@ -200,7 +272,7 @@ window.sendChit = async function() {
   document.getElementById('chit-text').value = '';
 }
 
-// ─── MARK CHIT (delegate clears their own inbox) ─────
+// ─── MARK CHIT ───────────────────────────
 window.markChit = async function(id) {
   await remove(ref(db, 'rooms/' + roomCode + '/chits/' + id));
 }
@@ -245,7 +317,6 @@ window.uploadDocument = async function() {
       uploadedAt: Date.now()
     });
 
-    // Show uploaded file name with AI score and X button
     const preview = document.getElementById('doc-ai-preview');
     const label = document.querySelector('.file-upload-area label');
     if (label) label.style.display = 'none';
