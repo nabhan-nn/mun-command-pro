@@ -256,8 +256,18 @@ function renderDocuments(docs) {
 
 window.downloadDoc = async function(docId, publicId, downloadURL, fileName) {
   try {
+    // Fetch the file first
     const response = await fetch(downloadURL);
+    
+    if (!response.ok) {
+      alert('File not found — it may have already been downloaded.');
+      await remove(ref(db, 'rooms/' + roomCode + '/documents/' + docId));
+      return;
+    }
+    
     const blob = await response.blob();
+    
+    // Only delete AFTER blob is fully received
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -267,14 +277,14 @@ window.downloadDoc = async function(docId, publicId, downloadURL, fileName) {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
 
-    setTimeout(async () => {
-      await fetch('/api/delete-file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ public_id: publicId })
-      });
-      await remove(ref(db, 'rooms/' + roomCode + '/documents/' + docId));
-    }, 1000);
+    // Now safe to delete since blob is already in memory
+    await fetch('/api/delete-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ public_id: publicId })
+    });
+    await remove(ref(db, 'rooms/' + roomCode + '/documents/' + docId));
+
   } catch (e) {
     alert('Download failed: ' + e.message);
   }
