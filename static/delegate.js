@@ -138,8 +138,27 @@ window.addEventListener('DOMContentLoaded', () => {
     `).join('') : '<div class="empty-state">No documents submitted</div>';
   });
 
+  // File input preview — shows filename and X button when file selected
+  const docFileInput = document.getElementById('doc-file');
+  if (docFileInput) {
+    docFileInput.addEventListener('change', function() {
+      const file = this.files[0];
+      const preview = document.getElementById('doc-ai-preview');
+      const label = document.querySelector('.file-upload-area label');
+      if (file) {
+        if (label) label.style.display = 'none';
+        preview.style.display = 'block';
+        preview.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:#f7f6f3;border:1.5px solid #ccc;border-radius:6px">
+            <span style="font-size:13px">📄 ${file.name}</span>
+            <button class="mx" type="button" onclick="clearUploadPreview()">✕</button>
+          </div>
+        `;
+      }
+    });
+  }
+
   // ── ROOM CLOSED LISTENER ──
-  // If room is deleted, redirect delegate to landing page
   onValue(ref(db, 'rooms/' + roomCode), snap => {
     if (!snap.exists()) {
       alert('This session has been closed by the chair.');
@@ -160,7 +179,6 @@ window.sendChit = async function() {
   if (containsProfanity(text)) {
     warningEl.style.display = 'block';
     warningEl.textContent = '⛔ Chit blocked — inappropriate language detected.';
-    // Log profanity alert to Firebase for secretariat
     await push(ref(db, 'rooms/' + roomCode + '/profanityAlerts'), {
       country, text, blockedAt: Date.now()
     });
@@ -182,7 +200,7 @@ window.sendChit = async function() {
   document.getElementById('chit-text').value = '';
 }
 
-// ─── MARK CHIT ───────────────────────────
+// ─── MARK CHIT (delegate clears their own inbox) ─────
 window.markChit = async function(id) {
   await remove(ref(db, 'rooms/' + roomCode + '/chits/' + id));
 }
@@ -201,8 +219,7 @@ window.uploadDocument = async function() {
   btn.disabled = true;
 
   try {
-    // Get your Cloudinary cloud name from a meta tag or hardcode it
-    const cloudName = 'dl9npvvln'; // replace with yours
+    const cloudName = 'dl9npvvln';
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', 'mun_documents');
@@ -228,22 +245,35 @@ window.uploadDocument = async function() {
       uploadedAt: Date.now()
     });
 
-    fileInput.value = '';
-const preview = document.getElementById('doc-ai-preview');
-preview.style.display = 'block';
-preview.innerHTML = `
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-    <span>📄 ${file.name}</span>
-    <span class="ai-badge ${aiScoreClass(aiScore)}">AI: ${aiScore}%</span>
-    <button class="mx" onclick="clearUploadPreview()">✕</button>
-  </div>
-`;
+    // Show uploaded file name with AI score and X button
+    const preview = document.getElementById('doc-ai-preview');
+    const label = document.querySelector('.file-upload-area label');
+    if (label) label.style.display = 'none';
+    preview.style.display = 'block';
+    preview.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:#E1F5EE;border:1.5px solid #1D9E75;border-radius:6px">
+        <span style="font-size:13px">✅ ${file.name} uploaded</span>
+        <span class="ai-badge ${aiScoreClass(aiScore)}">AI: ${aiScore}%</span>
+        <button class="mx" type="button" onclick="clearUploadPreview()">✕</button>
+      </div>
+    `;
+
   } catch (e) {
     alert('Upload error: ' + e.message);
   } finally {
     btn.textContent = 'Submit Document';
     btn.disabled = false;
   }
+}
+
+// ─── CLEAR UPLOAD PREVIEW ────────────────
+window.clearUploadPreview = function() {
+  document.getElementById('doc-file').value = '';
+  const preview = document.getElementById('doc-ai-preview');
+  preview.style.display = 'none';
+  preview.innerHTML = '';
+  const label = document.querySelector('.file-upload-area label');
+  if (label) label.style.display = 'block';
 }
 
 // ─── RAISE POI ───────────────────────────
@@ -272,7 +302,6 @@ window.submitAmendment = async function() {
 
   if (!resolution || !text) { alert('Fill in all fields'); return; }
 
-  // Send as a chit to the chair with amendment details
   await push(ref(db, 'rooms/' + roomCode + '/chits'), {
     from: country,
     to: 'Chair',
@@ -287,9 +316,4 @@ window.submitAmendment = async function() {
   document.getElementById('amend-clause').value = '';
   document.getElementById('amend-text').value = '';
   alert('Amendment submitted to chair');
-}
-window.clearUploadPreview = function() {
-  document.getElementById('doc-ai-preview').style.display = 'none';
-  document.getElementById('doc-ai-preview').innerHTML = '';
-  document.getElementById('doc-file').value = '';
 }
