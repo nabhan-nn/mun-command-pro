@@ -6,28 +6,39 @@ import firebase_admin
 from firebase_admin import credentials, db as firebase_db
 import cloudinary
 import cloudinary.uploader
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
 
-# Load your .env file
 load_dotenv()
-
-# Start Flask
 app = Flask(__name__)
 
-# Connect to Gemini
+# Gemini
 gemini_client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
-# Connect to Firebase
-import json
+# Firebase
 firebase_creds = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
 cred = credentials.Certificate(firebase_creds)
-firebase_admin.initialize_app(cred, {'databaseURL': os.getenv('FIREBASE_DATABASE_URL')})
+firebase_admin.initialize_app(cred, {
+    'databaseURL': os.getenv('FIREBASE_DATABASE_URL')
+})
 
-# Connect to Cloudinary for file storage
+# Cloudinary
 cloudinary.config(
     cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
     api_key    = os.getenv('CLOUDINARY_API_KEY'),
     api_secret = os.getenv('CLOUDINARY_API_SECRET')
 )
+
+# Google Sheets
+SHEET_ID = os.getenv('GOOGLE_SHEET_ID')
+
+def get_sheets_service():
+    creds_dict = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
+    creds = service_account.Credentials.from_service_account_info(
+        creds_dict,
+        scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
+    )
+    return build('sheets', 'v4', credentials=creds)
 
 # ─── PAGES ────────────────────────────────
 @app.route('/')
@@ -42,15 +53,93 @@ def chair():
 def delegate():
     return render_template('delegate.html')
 
+@app.route('/secretariat')
+def secretariat():
+    return render_template('secretariat.html')
+
+# ─── VERIFY CODE ──────────────────────────
+@app.route('/api/verify-code', methods=['POST'])
+def verify_code():
+    data = request.get_json()
+    code = data.get('code', '').strip().upper()
+
+    if not code:
+        return jsonify({'valid': False, 'error': 'No code provided'})
+
+    try:
+        service = get_sheets_service()
+        sheets = service.spreadsheets()
+
+        # Check Chairs tab
+        result = sheets.values().get(spreadsheetId=SHEET_ID, range='Chairs!A:C').execute()
+        rows = result.get('values', [])
+        for row in rows[1:]:  # skip header
+            if len(row) >= 3 and row[0].strip().upper() == code:
+                return jsonify({
+                    'valid': True,
+                    'role': 'chair',
+                    'name': row[1],
+                    'committee': row[2],
+                    'code': code
+                })
+
+        # Check Delegates tab
+        result = sheets.values().get(spreadsheetId=SHEET_ID, range='Delegates!A:C').execute()
+        rows = result.get('values', [])
+        for row in rows[1:]:
+            if len(row) >= 3 and row[0].strip().upper() == code:
+                return jsonify({
+                    'valid': True,
+                    'role': 'delegate',
+                    'country': row[1],
+                    'committee': row[2],
+                    'code': code
+                })
+
+        # Check Secretariat tab
+        result = sheets.values().get(spreadsheetId=SHEET_ID, range='Secretariat!A:C').execute()
+        rows = result.get('values', [])
+        for row in rows[1:]:
+            if len(row) >= 3 and row[0].strip().upper() == code:
+                return jsonify({
+                    'valid': True,
+                    'role': 'secretariat',
+                    'name': row[1],
+                    'role_title': row[2],
+                    'code': code
+                })
+
+        return jsonify({'valid': False, 'error': 'Invalid code'})
+
+    except Exception as e:
+        return jsonify({'valid': False, 'error': str(e)})
+
+# ─── GET DELEGATES FOR COMMITTEE ──────────
+@app.route('/api/delegates/<committee>', methods=['GET'])
+def get_delegates(committee):
+    try:
+        service = get_sheets_service()
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SHEET_ID,
+            range='Delegates!A:C'
+        ).execute()
+        rows = result.get('values', [])
+        delegates = [
+            {'code': r[0], 'country': r[1], 'committee': r[2]}
+            for r in rows[1:]
+            if len(r) >= 3 and r[2].strip().lower() == committee.strip().lower()
+        ]
+        return jsonify({'delegates': delegates})
+    except Exception as e:
+        return jsonify({'delegates': [], 'error': str(e)})
+
 # ─── AI SCORE ─────────────────────────────
 @app.route('/api/ai-score', methods=['POST'])
 def ai_score():
     data = request.get_json()
     text = data.get('text', '').strip()
-
     if not text or len(text) < 10:
         return jsonify({'ai_probability': 0})
-
     try:
         prompt = (
             'You are an AI detection tool. '

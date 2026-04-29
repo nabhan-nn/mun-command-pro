@@ -403,6 +403,75 @@ select { cursor: pointer; }
   font-family: 'DM Sans', sans-serif;
   width: 100%;
 }
+/* ── LOGIN PAGE ── */
+.login-card {
+  background: #fff;
+  border: 0.5px solid #ddd;
+  border-radius: 12px;
+  padding: 32px 28px;
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.login-hint { font-size: 11px; color: #aaa; text-align: center; }
+
+/* ── CLOSE ROOM BUTTON ── */
+.close-room-btn {
+  width: 100%;
+  margin-top: 10px;
+  background: #FCEBEB;
+  border: 1.5px solid #E24B4A;
+  color: #791F1F;
+  padding: 7px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.close-room-btn:hover { background: #f8d7d7; }
+
+/* ── SEARCHABLE DROPDOWN ── */
+.searchable-dropdown { padding: 10px 10px 0; position: relative; }
+.dropdown-list {
+  display: none;
+  position: absolute;
+  left: 10px; right: 10px;
+  background: #fff;
+  border: 0.5px solid #ddd;
+  border-radius: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.dropdown-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #111;
+}
+.dropdown-item:hover { background: #EEEDFE; }
+.dropdown-item.empty { color: #aaa; cursor: default; font-style: italic; }
+
+/* ── STATS GRID ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.stat-card {
+  background: #fff;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+.stat-number { font-size: 36px; font-weight: 500; color: #111; }
+.stat-label { font-size: 12px; color: #888; margin-top: 4px; }
 
 .card button:hover { background: #333; }
 .modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 4px; }

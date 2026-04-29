@@ -10,7 +10,6 @@
 <body class="app-page">
 <div class="app-layout">
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <span class="sidebar-logo">⬡ MUN Command Pro</span>
@@ -29,10 +28,10 @@
     <div class="sidebar-footer">
       <div class="sidebar-name" id="chair-name-display">—</div>
       <div class="sidebar-cmte" id="committee-display">—</div>
+      <button class="close-room-btn" onclick="closeRoom()">Close Room</button>
     </div>
   </aside>
 
-  <!-- MAIN -->
   <main class="main-content">
     <header class="topbar">
       <div class="topbar-title" id="page-title">Speakers</div>
@@ -42,10 +41,10 @@
     <!-- SPEAKERS TAB -->
     <section class="tab-content active" id="tab-speakers">
       <div class="two-col">
-
         <div class="panel">
-          <div class="panel-header"><h3>Current speaker</h3>
-            <button class="btn-outline" onclick="nextSpeakerBtn()">Next →</button>
+          <div class="panel-header">
+            <h3>Current speaker</h3>
+            <button class="btn-solid" onclick="nextSpeakerBtn()">Next →</button>
           </div>
           <div class="speaker-display">
             <div class="speaker-name" id="current-speaker-name">No speaker selected</div>
@@ -57,20 +56,21 @@
             </div>
             <div class="timer-set">
               <label>Speaking time (seconds)</label>
-              <input type="number" id="speaker-time" value="90" min="30" max="300" />
+              <input type="number" id="speaker-time" value="90" min="30" max="300" style="width:70px" />
             </div>
           </div>
         </div>
 
         <div class="panel">
-          <div class="panel-header"><h3>Queue</h3>
-            <button class="btn-solid" onclick="openAddSpeaker()">+ Add</button>
+          <div class="panel-header"><h3>Speakers queue</h3></div>
+          <div class="searchable-dropdown">
+            <input type="text" id="speaker-search" placeholder="Search country..." oninput="filterDelegates()" />
+            <div class="dropdown-list" id="delegate-dropdown"></div>
           </div>
           <div class="list-area" id="speakers-queue">
             <div class="empty-state">No speakers queued</div>
           </div>
         </div>
-
       </div>
 
       <div class="panel">
@@ -84,8 +84,9 @@
     <!-- MOTIONS TAB -->
     <section class="tab-content" id="tab-motions">
       <div class="panel">
-        <div class="panel-header"><h3>Pending motions</h3>
-          <button class="btn-solid" onclick="openAddMotion()">+ Add</button>
+        <div class="panel-header">
+          <h3>Pending motions</h3>
+          <button class="btn-solid" onclick="openModal('modal-add-motion')">+ Add</button>
         </div>
         <div class="list-area" id="motions-list">
           <div class="empty-state">No motions submitted</div>
@@ -96,8 +97,9 @@
     <!-- DOCUMENTS TAB -->
     <section class="tab-content" id="tab-documents">
       <div class="panel">
-        <div class="panel-header"><h3>Submitted documents</h3>
-          <span class="panel-sub">Chair sees all — download deletes from database</span>
+        <div class="panel-header">
+          <h3>Submitted documents</h3>
+          <span class="panel-sub">Download deletes from storage</span>
         </div>
         <div class="list-area" id="documents-list">
           <div class="empty-state">No documents submitted</div>
@@ -108,7 +110,8 @@
     <!-- CHITS TAB -->
     <section class="tab-content" id="tab-chits">
       <div class="panel">
-        <div class="panel-header"><h3>All chits</h3>
+        <div class="panel-header">
+          <h3>All chits</h3>
           <span class="panel-sub">Chair sees all</span>
         </div>
         <div class="list-area" id="chits-list">
@@ -120,7 +123,8 @@
     <!-- DELEGATES TAB -->
     <section class="tab-content" id="tab-delegates">
       <div class="panel">
-        <div class="panel-header"><h3>Connected delegates</h3>
+        <div class="panel-header">
+          <h3>Connected delegates</h3>
           <span class="panel-sub" id="delegate-count">0 online</span>
         </div>
         <div class="delegates-grid" id="delegates-grid">
@@ -130,18 +134,6 @@
     </section>
 
   </main>
-</div>
-
-<!-- ADD SPEAKER MODAL -->
-<div class="modal-overlay" id="modal-add-speaker">
-  <div class="modal">
-    <h3>Add to speakers list</h3>
-    <input type="text" id="speaker-input" placeholder="Country name" />
-    <div class="modal-actions">
-      <button class="btn-outline" onclick="closeModal('modal-add-speaker')">Cancel</button>
-      <button class="btn-solid" onclick="addSpeaker()">Add</button>
-    </div>
-  </div>
 </div>
 
 <!-- ADD MOTION MODAL -->

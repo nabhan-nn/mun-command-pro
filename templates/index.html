@@ -10,35 +10,15 @@
 <body class="landing">
   <div class="landing-container">
     <div class="landing-logo">⬡ MUN Command Pro</div>
-    <p class="landing-sub">Real-time session management for chairs and delegates</p>
+    <p class="landing-sub">Enter your access code to continue</p>
 
-    <div class="landing-cards">
-
-      <div class="card">
-        <h2>I am a Chair</h2>
-        <p>Create and manage a committee session</p>
-        <input type="text" id="chair-name" placeholder="Your name" />
-        <input type="text" id="committee" placeholder="Committee (e.g. UNSC)" />
-        <button onclick="createRoom()">Create Session</button>
-        <div id="created-code" style="display:none">
-          <p>Your room code — share this with delegates:</p>
-          <div class="code-display" id="code-display"></div>
-          <button onclick="goToChair()">Enter Dashboard</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>I am a Delegate</h2>
-        <p>Join an existing session</p>
-        <input type="text" id="room-code" placeholder="Room code (e.g. MUN-4829)" />
-        <input type="text" id="country" placeholder="Your country" />
-        <button onclick="joinRoom()">Join Session</button>
-        <div class="error-msg" id="join-error"></div>
-      </div>
-
+    <div class="login-card">
+      <input type="text" id="access-code" placeholder="Enter your code (e.g. CHAIR-A1B2)" autocomplete="off" />
+      <button id="login-btn">Continue</button>
+      <div class="error-msg" id="login-error"></div>
+      <div class="login-hint">Codes are provided by your conference secretariat</div>
     </div>
   </div>
-
   <script type="module" src="/static/app.js"></script>
 </body>
 </html>
