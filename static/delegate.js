@@ -180,6 +180,37 @@ window.addEventListener('DOMContentLoaded', () => {
       window.location.href = '/';
     }
   });
+
+  // Live timer from chair
+  onValue(ref(db, 'rooms/' + roomCode + '/timerValue'), snap => {
+    const val = snap.val();
+    const el = document.getElementById('del-timer');
+    if (el && val !== null) {
+      el.textContent = formatTime(val);
+      el.className = 'timer' + (val <= 15 ? ' warning' : '') + (val <= 5 ? ' danger' : '');
+    }
+  });
+
+  // Amendments
+  onValue(ref(db, 'rooms/' + roomCode + '/amendments'), snap => {
+    const amendments = snap.val() || {};
+    const myAmends = Object.entries(amendments)
+      .map(([id, d]) => ({id, ...d}))
+      .filter(a => a.from === country);
+    const list = document.getElementById('del-amendments-list');
+    list.innerHTML = myAmends.length ? myAmends.map(a => `
+      <div class="list-row">
+        <div>
+          <span class="row-tag ${a.status === 'accepted' ? 'tag-dr' : a.status === 'rejected' ? 'tag-challenge' : 'tag-pp'}">
+            ${a.status === 'accepted' ? 'Accepted' : a.status === 'rejected' ? 'Rejected' : 'Pending'}
+          </span>
+          <div class="row-country">${a.type} — ${a.resolution}</div>
+          <div class="row-detail">Clause: ${a.clause}</div>
+          <div class="row-detail">${a.text}</div>
+        </div>
+      </div>
+    `).join('') : '<div class="empty-state">No amendments submitted</div>';
+  });
 });
 
 // ─── THREAD FUNCTIONS ────────────────────
@@ -348,9 +379,9 @@ window.clearUploadPreview = function() {
 }
 
 // ─── RAISE POI ───────────────────────────
-window.raisePOI = async function() {
+window.raisePoint = async function(type) {
   await push(ref(db, 'rooms/' + roomCode + '/pois'), {
-    country, raisedAt: Date.now()
+    country, type, raisedAt: Date.now()
   });
 }
 
@@ -373,14 +404,14 @@ window.submitAmendment = async function() {
 
   if (!resolution || !text) { alert('Fill in all fields'); return; }
 
-  await push(ref(db, 'rooms/' + roomCode + '/chits'), {
+  await push(ref(db, 'rooms/' + roomCode + '/amendments'), {
     from: country,
-    to: 'Chair',
-    text: `[AMENDMENT — ${type}] Resolution: ${resolution} | Clause: ${clause} | Proposed text: ${text}`,
-    aiScore: 0,
-    isAmendment: true,
-    amendType: type,
-    sentAt: Date.now()
+    resolution,
+    clause,
+    type,
+    text,
+    status: 'pending',
+    submittedAt: Date.now()
   });
 
   document.getElementById('amend-resolution').value = '';

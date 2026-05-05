@@ -1,5 +1,5 @@
-import os, json, re
-from flask import Flask, request, jsonify, render_template
+import os, json, re, io
+from flask import Flask, request, jsonify, render_template, send_file
 from dotenv import load_dotenv
 from google import genai
 import firebase_admin
@@ -8,6 +8,7 @@ import cloudinary
 import cloudinary.uploader
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+import requests as http_requests
 
 load_dotenv()
 app = Flask(__name__)
@@ -73,7 +74,7 @@ def verify_code():
         # Check Chairs tab
         result = sheets.values().get(spreadsheetId=SHEET_ID, range='Chairs!A:C').execute()
         rows = result.get('values', [])
-        for row in rows[1:]:  # skip header
+        for row in rows[1:]:
             if len(row) >= 3 and row[0].strip().upper() == code:
                 return jsonify({
                     'valid': True,
@@ -142,21 +143,20 @@ def ai_score():
         return jsonify({'ai_probability': 0})
     try:
         prompt = (
-            'You are an AI detection tool. '
-            'Analyse this text and return ONLY a JSON object with no markdown, no explanation, nothing else. '
-            'Format: {"ai_probability": 85} where the number is 0-100. '
-            'Higher means more likely AI written. '
-            'Text: ' + text
+            'Rate how likely this text was written by AI vs a human student. '
+            'Reply with ONLY a number between 0 and 100. '
+            'No explanation. No JSON. No markdown. Just the number. '
+            'Example reply: 73 '
+            'Text: ' + text[:500]
         )
         response = gemini_client.models.generate_content(
             model='gemini-1.5-flash',
             contents=prompt
         )
-        # Strip markdown code blocks if Gemini wraps in ```json
-        raw = response.text.strip()
-        raw = raw.replace('```json', '').replace('```', '').strip()
-        result = json.loads(raw)
-        return jsonify(result)
+        raw = response.text.strip().replace('%', '').split()[0]
+        score = int(float(raw))
+        score = max(0, min(99, score))
+        return jsonify({'ai_probability': score})
     except Exception:
         return jsonify({'ai_probability': heuristic(text)})
 
@@ -168,6 +168,33 @@ def heuristic(text):
     score = sum(12 for w in words if re.search(r'\b'+w+r'\b', text.lower()))
     return min(score, 99)
 
+# ─── DOWNLOAD FILE VIA BACKEND ────────────
+@app.route('/api/download-file', methods=['POST'])
+def download_file():
+    data = request.get_json()
+    url = data.get('url')
+    filename = data.get('filename')
+    public_id = data.get('public_id')
+
+    try:
+        response = http_requests.get(url, timeout=30)
+        if response.status_code != 200:
+            return jsonify({'error': 'File not found on storage'}), 404
+        
+        file_data = io.BytesIO(response.content)
+        file_data.seek(0)  # Reset pointer to start
+
+        # Delete from Cloudinary
+        cloudinary.uploader.destroy(public_id, resource_type='raw')
+
+        return send_file(
+            file_data,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 # ─── DELETE FILE FROM CLOUDINARY ──────────
 @app.route('/api/delete-file', methods=['POST'])
 def delete_file():

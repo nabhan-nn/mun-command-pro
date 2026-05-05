@@ -23,7 +23,7 @@
       <div class="nav-item active" onclick="showTab('session', this)">Session</div>
       <div class="nav-item" onclick="showTab('chits', this)">Chits <span class="nav-badge" id="badge-inbox"></span></div>
       <div class="nav-item" onclick="showTab('documents', this)">Documents</div>
-      <div class="nav-item" onclick="showTab('amendments', this)">Amendments</div>
+      <div class="nav-item" onclick="showTab('amendments', this)">Amendments <span class="nav-badge" id="badge-amendments"></span></div>
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-name" id="del-country-display">—</div>
@@ -47,7 +47,11 @@
           <div class="speaker-display">
             <div class="speaker-name" id="del-current-speaker">Waiting for chair...</div>
             <div class="timer" id="del-timer">—</div>
-            <button class="btn-outline" style="margin-top:12px" onclick="raisePOI()">Raise POI</button>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap">
+              <button class="btn-outline" onclick="raisePoint('POI')">Raise POI</button>
+              <button class="btn-outline" onclick="raisePoint('POO')">Raise POO</button>
+              <button class="btn-outline" onclick="raisePoint('PPP')">Raise PPP</button>
+            </div>
           </div>
         </div>
 
@@ -118,6 +122,8 @@
               <option value="Position Paper">Position Paper</option>
               <option value="Draft Resolution">Draft Resolution</option>
               <option value="Working Paper">Working Paper</option>
+              <option value="Private Directive">Private Directive</option>
+              <option value="Public Directive">Public Directive</option>
             </select>
             <div class="file-upload-area">
               <input type="file" id="doc-file" accept=".pdf" />

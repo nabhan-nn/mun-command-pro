@@ -64,6 +64,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     const pois = snap.val() || {};
     renderPOIs(Object.entries(pois).map(([id,d]) => ({id,...d})));
   });
+
+  onValue(ref(db, 'rooms/' + roomCode + '/amendments'), snap => {
+    const amendments = snap.val() || {};
+    const arr = Object.entries(amendments).map(([id, d]) => ({id, ...d}));
+    renderAmendments(arr);
+  });
 });
 
 // ─── LOAD DELEGATES FROM SHEET ───────────
@@ -152,11 +158,13 @@ window.nextSpeakerBtn = async function() {
 // ─── TIMER ───────────────────────────────
 window.startTimer = function() {
   if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
+  timerInterval = setInterval(async () => {
     timerSeconds--;
     const el = document.getElementById('timer-display');
     el.textContent = formatTime(timerSeconds);
     el.className = 'timer' + (timerSeconds <= 15 ? ' warning' : '') + (timerSeconds <= 5 ? ' danger' : '');
+    // Broadcast to Firebase so delegates can see
+    await set(ref(db, 'rooms/' + roomCode + '/timerValue'), timerSeconds);
     if (timerSeconds <= 0) clearInterval(timerInterval);
   }, 1000);
 }
@@ -325,11 +333,11 @@ function renderDelegates(delegates) {
 // ─── POIs ────────────────────────────────
 function renderPOIs(pois) {
   const list = document.getElementById('poi-list');
-  if (!pois.length) { list.innerHTML = '<div class="empty-state">No POI requests</div>'; return; }
+  if (!pois.length) { list.innerHTML = '<div class="empty-state">No requests</div>'; return; }
   list.innerHTML = pois.map(p => `
     <div class="list-row">
       <div>
-        <span class="row-tag tag-order">POI</span>
+        <span class="row-tag tag-order">${p.type || 'POI'}</span>
         <div class="row-country">${p.country}</div>
       </div>
       <div class="row-btns">
@@ -358,6 +366,33 @@ function updateBadge(id, count) {
   if (!el) return;
   el.textContent = count;
   el.classList.toggle('visible', count > 0);
+}
+
+function renderAmendments(amendments) {
+  // Add amendments to chits list with accept/reject
+  const pending = amendments.filter(a => a.status === 'pending');
+  const amendEl = document.getElementById('amendments-chair-list');
+  if (!amendEl) return;
+  amendEl.innerHTML = pending.length ? pending.map(a => `
+    <div class="chit-item" style="border-left:3px solid #534AB7">
+      <div class="chit-header">
+        <span class="chit-route"><span class="row-tag tag-pp">Amendment</span> From <strong>${a.from}</strong></span>
+        <span class="chit-time">${formatTimestamp(a.submittedAt)}</span>
+      </div>
+      <div class="chit-body">
+        <strong>${a.type}</strong> — ${a.resolution} | Clause: ${a.clause}<br/>
+        ${a.text}
+      </div>
+      <div class="chit-footer">
+        <button class="btn-sm" onclick="resolveAmendment('${a.id}', 'accepted')" style="border-color:#1D9E75;color:#085041">Accept</button>
+        <button class="btn-sm" onclick="resolveAmendment('${a.id}', 'rejected')" style="border-color:#E24B4A;color:#791F1F">Reject</button>
+      </div>
+    </div>
+  `).join('') : '<div class="empty-state">No pending amendments</div>';
+}
+
+window.resolveAmendment = async function(id, status) {
+  await set(ref(db, 'rooms/' + roomCode + '/amendments/' + id + '/status'), status);
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
