@@ -1,5 +1,5 @@
 import { SESSION, formatTime, formatTimestamp, motionLabel,
-         aiScoreBadge, aiScoreClass, updateNavCount,
+         aiScoreBadge, updateNavCount,
          initTabs, updateClosedBanner, disableSubmitButtons,
          api, containsProfanity } from './app.js';
 
@@ -8,33 +8,20 @@ let lastTimestamp = 0;
 let allChits = [];
 let currentThread = null;
 
-// allChits stores every chit involving this delegate.
-// currentThread stores who the currently open conversation is with.
-
 // ── INITIALISE ──
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // Guard — if not logged in as delegate, go back to login
   if (!SESSION.roomId || SESSION.role !== 'delegate') {
     window.location.href = '/';
     return;
   }
 
-  // Fill in sidebar info
   document.getElementById('del-room-code').textContent = SESSION.roomId;
   document.getElementById('del-country-display').textContent = SESSION.country;
   document.getElementById('del-code-display').textContent = SESSION.code;
 
-  // Set up tab switching
   initTabs();
-
-  // Populate the chit recipient dropdown with delegates from the same committee
   await loadRecipients();
-
-  // Listen for file selection to show preview
-  document.getElementById('doc-file').addEventListener('change', handleFileSelect);
-
-  // Start polling
   startPolling();
 });
 
@@ -49,30 +36,24 @@ async function poll() {
     const data = await api(`/api/poll/${SESSION.roomId}?since=${lastTimestamp}`);
     if (!data.room) return;
 
-    // Update room open/closed state
     const isOpen = data.room.is_open;
     updateClosedBanner(isOpen, 'del-closed-banner');
     disableSubmitButtons(isOpen);
 
-    // Update session tab
     updateSession(data.room, data.speakers);
-
-    // Update motions
     updateMotions(data.motions);
-
-    // Update amendments (delegate only sees their own)
     updateMyAmendments(data.amendments);
-
-    // Update my documents
     updateMyDocuments(data.documents);
 
-    // Add new chits to local state
+    // Deduplicate chits
     if (data.chits.length > 0) {
-      allChits = [...allChits, ...data.chits];
-      renderConversations();
-
-      // If a thread is open, update it with new messages
-      if (currentThread) renderThread(currentThread);
+      const existingIds = new Set(allChits.map(c => c.id));
+      const newChits = data.chits.filter(c => !existingIds.has(c.id));
+      if (newChits.length > 0) {
+        allChits = [...allChits, ...newChits];
+        renderConversations();
+        if (currentThread) renderThread(currentThread);
+      }
     }
 
     lastTimestamp = data.timestamp;
@@ -84,11 +65,9 @@ async function poll() {
 
 // ── SESSION TAB ──
 function updateSession(room, speakers) {
-  // Current speaker
   const speakerEl = document.getElementById('del-current-speaker');
   speakerEl.textContent = room.current_speaker || 'Waiting for chair...';
 
-  // Timer — show value broadcast by chair
   const timerEl = document.getElementById('del-timer');
   if (room.timer_value !== null && room.timer_value !== undefined) {
     timerEl.textContent = formatTime(room.timer_value);
@@ -97,7 +76,6 @@ function updateSession(room, speakers) {
     if (room.timer_value <= 5)  timerEl.classList.add('danger');
   }
 
-  // Speakers queue
   const queueEl = document.getElementById('del-speakers-queue');
   if (!speakers || !speakers.length) {
     queueEl.innerHTML = '<div class="empty-msg">No speakers queued</div>';
@@ -111,30 +89,17 @@ function updateSession(room, speakers) {
   `).join('');
 }
 
-// The delegate sees the timer value that the chair broadcasts.
-// The chair runs the actual countdown and saves each second
-// to the database. The delegate just reads and displays it.
-// This means all delegates see the exact same timer as the chair.
-
-// ── RAISE POINT ──
+// ── RAISE POINT (POO and PPP only — no POI) ──
 window.raisePoint = async function(type) {
   await api('/api/point/raise', {
     room_id: SESSION.roomId,
     country: SESSION.country,
     type: type
   });
-
-  // Brief visual feedback
   const btn = event.target;
   btn.textContent = '✓ Raised';
-  setTimeout(() => {
-    btn.textContent = `Raise ${type}`;
-  }, 2000);
+  setTimeout(() => { btn.textContent = `Raise ${type}`; }, 2000);
 }
-
-// event.target is the button that was clicked.
-// We briefly change its text to confirm the action,
-// then restore it after 2 seconds.
 
 // ── LOAD RECIPIENTS ──
 async function loadRecipients() {
@@ -142,7 +107,6 @@ async function loadRecipients() {
     const data = await api(`/api/delegates/${encodeURIComponent(SESSION.committee)}`);
     const select = document.getElementById('chit-recipient');
     select.innerHTML = '<option value="Chair">Chair</option>';
-
     (data.delegates || []).forEach(d => {
       if (d.country !== SESSION.country) {
         const opt = document.createElement('option');
@@ -156,10 +120,6 @@ async function loadRecipients() {
   }
 }
 
-// We skip the delegate's own country so you can't send a chit to yourself.
-// createElement creates a new HTML element in memory.
-// appendChild adds it inside the select dropdown.
-
 // ── SEND CHIT ──
 window.sendChit = async function() {
   const text = document.getElementById('chit-text').value.trim();
@@ -168,7 +128,6 @@ window.sendChit = async function() {
 
   if (!text) return;
 
-  // Check profanity before sending
   if (containsProfanity(text)) {
     warningEl.style.display = 'block';
     return;
@@ -183,21 +142,15 @@ window.sendChit = async function() {
     text: text
   });
 
-  if (result.closed) {
-    alert('Room is currently closed');
-    return;
-  }
+  if (result.closed) { alert('Room is currently closed'); return; }
 
-  // Clear the input on success
   document.getElementById('chit-text').value = '';
 }
 
 // ── CONVERSATIONS ──
-// Groups all chits into conversation threads by who you're talking to
 function renderConversations() {
   const list = document.getElementById('conversations-list');
 
-  // Only show chits involving this delegate
   const myChits = allChits.filter(c =>
     c.from_country === SESSION.country || c.to_country === SESSION.country
   );
@@ -207,7 +160,6 @@ function renderConversations() {
     return;
   }
 
-  // Group by the other person in the conversation
   const threads = {};
   myChits.forEach(c => {
     const other = c.from_country === SESSION.country ? c.to_country : c.from_country;
@@ -215,8 +167,6 @@ function renderConversations() {
     threads[other].push(c);
   });
 
-  // Count unread — chits sent TO you that you haven't opened yet
-  // We track this by whether you've opened that thread
   const openedThreads = JSON.parse(sessionStorage.getItem('opened_threads') || '{}');
 
   list.innerHTML = Object.entries(threads).map(([other, chits]) => {
@@ -238,7 +188,6 @@ function renderConversations() {
     `;
   }).join('');
 
-  // Update inbox badge count
   const totalUnread = Object.entries(threads).reduce((sum, [other, chits]) => {
     return sum + chits.filter(c =>
       c.to_country === SESSION.country && !openedThreads[other]
@@ -247,24 +196,17 @@ function renderConversations() {
   updateNavCount('del-count-chits', totalUnread);
 }
 
-// reduce() accumulates a value across an array.
-// It's like a running total — starts at 0 and adds
-// unread count from each thread.
-
 // ── THREAD VIEW ──
 window.openThread = function(other) {
   currentThread = other;
-
-  // Mark this thread as opened (clears unread badge)
   const openedThreads = JSON.parse(sessionStorage.getItem('opened_threads') || '{}');
   openedThreads[other] = true;
   sessionStorage.setItem('opened_threads', JSON.stringify(openedThreads));
 
   document.getElementById('thread-card').style.display = 'block';
   document.getElementById('thread-title').textContent = other;
-
   renderThread(other);
-  renderConversations(); // re-render to clear unread badge
+  renderConversations();
 }
 
 window.closeThread = function() {
@@ -279,9 +221,6 @@ function renderThread(other) {
     (c.from_country === SESSION.country && c.to_country === other) ||
     (c.from_country === other && c.to_country === SESSION.country)
   ).sort((a, b) => a.sent_at - b.sent_at);
-
-  // Sort by time so messages appear in chronological order
-  // a.sent_at - b.sent_at: negative = a first, positive = b first
 
   if (!threadChits.length) {
     container.innerHTML = '<div class="empty-msg">No messages yet</div>';
@@ -303,17 +242,11 @@ function renderThread(other) {
     `;
   }).join('');
 
-  // Auto-scroll to bottom of thread
   container.scrollTop = container.scrollHeight;
 }
 
-// scrollTop = scrollHeight scrolls to the very bottom.
-// This means new messages always appear visible
-// without the user having to scroll down manually.
-
 window.sendReply = async function() {
   if (!currentThread) return;
-
   const text = document.getElementById('reply-text').value.trim();
   if (!text) return;
 
@@ -329,94 +262,40 @@ window.sendReply = async function() {
     text: text
   });
 
-  if (result.closed) {
-    alert('Room is currently closed');
-    return;
-  }
-
+  if (result.closed) { alert('Room is currently closed'); return; }
   document.getElementById('reply-text').value = '';
 }
 
-// ── FILE UPLOAD ──
-function handleFileSelect() {
-  const file = document.getElementById('doc-file').files[0];
-  const label = document.getElementById('file-label');
-  const dropArea = document.getElementById('file-drop');
-
-  if (file) {
-    label.textContent = '📄 ' + file.name;
-    dropArea.classList.add('has-file');
-  } else {
-    label.textContent = 'Choose PDF file';
-    dropArea.classList.remove('has-file');
-  }
-}
-
-window.uploadDocument = async function() {
-  const fileInput = document.getElementById('doc-file');
+// ── SUBMIT DOCUMENT (text-based) ──
+window.submitDocument = async function() {
   const docType = document.getElementById('doc-type').value;
-  const file = fileInput.files[0];
+  const title = document.getElementById('doc-title').value.trim();
+  const content = document.getElementById('doc-content').value.trim();
   const btn = document.getElementById('upload-btn');
 
-  if (!file) { alert('Choose a PDF file first'); return; }
-  if (file.type !== 'application/pdf') { alert('Only PDF files are allowed'); return; }
+  if (!title || !content) { alert('Please fill in the title and content'); return; }
 
-  btn.textContent = 'Uploading...';
+  btn.textContent = 'Submitting...';
   btn.disabled = true;
 
   try {
-    // Step 1 — Upload PDF directly to Cloudinary from the browser
-    // The file goes browser → Cloudinary directly, not through your server
-    // This is faster and doesn't use up your server's memory
-    const cloudName = 'dl9npvvln'; // your Cloudinary cloud name
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'mun_documents');
-    formData.append('resource_type', 'raw');
-
-    const uploadRes = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
-      { method: 'POST', body: formData }
-    );
-    const uploadData = await uploadRes.json();
-
-    if (uploadData.error) {
-      alert('Upload failed: ' + uploadData.error.message);
-      return;
-    }
-
-    // Step 2 — Send metadata to your Flask backend
-    // The backend saves the Cloudinary URL and calculates AI score
-    const result = await api('/api/document/upload', {
+    const result = await api('/api/document/submit', {
       room_id: SESSION.roomId,
       country: SESSION.country,
       doc_type: docType,
-      file_name: file.name,
-      public_id: uploadData.public_id,
-      download_url: uploadData.secure_url,
-      text_sample: ''
-      // text_sample is empty here since we can't easily extract
-      // text from a PDF in the browser. The AI scorer will get
-      // a low score for empty text — acceptable tradeoff.
+      title: title,
+      content: content
     });
 
-    if (result.closed) {
-      alert('Room is currently closed');
-      return;
-    }
+    if (result.closed) { alert('Room is currently closed'); return; }
 
-    // Reset the file input
-    fileInput.value = '';
-    document.getElementById('file-label').textContent = 'Choose PDF file';
-    document.getElementById('file-drop').classList.remove('has-file');
-
+    document.getElementById('doc-title').value = '';
+    document.getElementById('doc-content').value = '';
     alert('Document submitted successfully');
 
   } catch (e) {
-    alert('Upload error: ' + e.message);
+    alert('Error: ' + e.message);
   } finally {
-    // finally always runs whether or not there was an error
-    // This ensures the button is always re-enabled
     btn.textContent = 'Submit';
     btn.disabled = false;
   }
@@ -425,8 +304,6 @@ window.uploadDocument = async function() {
 // ── MY DOCUMENTS ──
 function updateMyDocuments(documents) {
   const list = document.getElementById('my-documents');
-
-  // Only show this delegate's documents
   const myDocs = documents.filter(d => d.country === SESSION.country);
 
   if (!myDocs.length) {
@@ -435,18 +312,15 @@ function updateMyDocuments(documents) {
   }
 
   const tagMap = {
-    'Position Paper': 'pp',
-    'Draft Resolution': 'dr',
-    'Working Paper': 'wp',
-    'Private Directive': 'pd',
-    'Public Directive': 'pd'
+    'Position Paper': 'pp', 'Draft Resolution': 'dr',
+    'Working Paper': 'wp', 'Private Directive': 'pd', 'Public Directive': 'pd'
   };
 
   list.innerHTML = myDocs.map(d => `
     <div class="list-row">
       <div>
         <span class="row-tag tag-${tagMap[d.type] || 'pp'}">${d.type}</span>
-        <div class="row-main">${d.file_name}</div>
+        <div class="row-main">${d.title || '—'}</div>
         <div class="row-sub">Submitted · waiting for chair</div>
         <div style="margin-top:4px">${aiScoreBadge(d.ai_score)}</div>
       </div>
@@ -461,26 +335,16 @@ window.submitAmendment = async function() {
   const type = document.getElementById('amend-type').value;
   const text = document.getElementById('amend-text').value.trim();
 
-  if (!resolution || !text) {
-    alert('Please fill in all fields');
-    return;
-  }
+  if (!resolution || !text) { alert('Please fill in all fields'); return; }
 
   const result = await api('/api/amendment/submit', {
     room_id: SESSION.roomId,
     country: SESSION.country,
-    resolution,
-    clause,
-    type,
-    text
+    resolution, clause, type, text
   });
 
-  if (result.closed) {
-    alert('Room is currently closed');
-    return;
-  }
+  if (result.closed) { alert('Room is currently closed'); return; }
 
-  // Clear form
   document.getElementById('amend-resolution').value = '';
   document.getElementById('amend-clause').value = '';
   document.getElementById('amend-text').value = '';
@@ -489,8 +353,6 @@ window.submitAmendment = async function() {
 
 function updateMyAmendments(amendments) {
   const list = document.getElementById('my-amendments');
-
-  // Only show this delegate's amendments
   const mine = amendments.filter(a => a.country === SESSION.country);
 
   if (!mine.length) {
@@ -510,10 +372,6 @@ function updateMyAmendments(amendments) {
   `).join('');
 }
 
-// The status tag shows 'pending', 'accepted' or 'rejected'
-// using the CSS classes tag-pending, tag-accepted, tag-rejected
-// which we defined in style.css.
-
 // ── MOTIONS ──
 window.submitMotion = async function() {
   const type = document.getElementById('del-motion-type').value;
@@ -522,14 +380,10 @@ window.submitMotion = async function() {
   const result = await api('/api/motion/submit', {
     room_id: SESSION.roomId,
     country: SESSION.country,
-    type,
-    details
+    type, details
   });
 
-  if (result.closed) {
-    alert('Room is currently closed');
-    return;
-  }
+  if (result.closed) { alert('Room is currently closed'); return; }
 
   document.getElementById('del-motion-details').value = '';
   alert('Motion submitted');

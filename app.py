@@ -1,25 +1,34 @@
 import os
 import json
 import re
-import math
-from flask import Flask, request, jsonify, render_template, send_file
+from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
-import cloudinary
-import cloudinary.uploader
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-import io
-import requests as http_requests
 
 load_dotenv()
 app = Flask(__name__)
 
-def get_db():
-    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
-    return conn
+# ─── CONNECTION POOL ──────────────────────
+# Instead of opening a new connection for every request,
+# we keep a pool of 2-10 connections and reuse them.
+# This dramatically reduces memory usage.
+connection_pool = pool.ThreadedConnectionPool(
+    2,
+    10,
+    os.getenv('DATABASE_URL')
+)
 
+def get_db():
+    return connection_pool.getconn()
+
+def return_db(conn):
+    connection_pool.putconn(conn)
+
+# ─── DATABASE SETUP ───────────────────────
 def init_db():
     conn = get_db()
     cur = conn.cursor()
@@ -63,8 +72,6 @@ def init_db():
             to_country TEXT NOT NULL,
             text TEXT NOT NULL,
             ai_score INTEGER DEFAULT 0,
-            is_marked BOOLEAN DEFAULT FALSE,
-            is_amendment BOOLEAN DEFAULT FALSE,
             sent_at BIGINT
         )
     ''')
@@ -86,9 +93,8 @@ def init_db():
             room_id TEXT NOT NULL,
             country TEXT NOT NULL,
             type TEXT NOT NULL,
-            file_name TEXT,
-            public_id TEXT,
-            download_url TEXT,
+            title TEXT,
+            content TEXT,
             ai_score INTEGER DEFAULT 0,
             uploaded_at BIGINT
         )
@@ -120,16 +126,11 @@ def init_db():
 
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
 
 init_db()
 
-cloudinary.config(
-    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
-    api_key=os.getenv('CLOUDINARY_API_KEY'),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET')
-)
-
+# ─── GOOGLE SHEETS ────────────────────────
 SHEET_ID = os.getenv('GOOGLE_SHEET_ID')
 
 def get_sheets_service():
@@ -140,6 +141,7 @@ def get_sheets_service():
     )
     return build('sheets', 'v4', credentials=creds)
 
+# ─── AI SCORE ─────────────────────────────
 def calculate_ai_score(text):
     if not text or len(text) < 20:
         return 0
@@ -267,7 +269,7 @@ def create_room():
         conn.commit()
 
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'room_id': room_id})
 
 @app.route('/api/room/toggle', methods=['POST'])
@@ -279,7 +281,7 @@ def toggle_room():
                 (data.get('is_open'), data.get('room_id')))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 @app.route('/api/room/<room_id>', methods=['GET'])
@@ -289,7 +291,7 @@ def get_room(room_id):
     cur.execute('SELECT * FROM rooms WHERE id = %s', (room_id,))
     room = cur.fetchone()
     cur.close()
-    conn.close()
+    return_db(conn)
     if not room:
         return jsonify({'error': 'Room not found'}), 404
     return jsonify(dict(room))
@@ -303,7 +305,7 @@ def set_speaker():
                 (data.get('speaker'), data.get('room_id')))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 @app.route('/api/room/set-timer', methods=['POST'])
@@ -315,7 +317,7 @@ def set_timer():
                 (data.get('timer'), data.get('room_id')))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 # ─── POLL ─────────────────────────────────
@@ -329,9 +331,10 @@ def poll(room_id):
     cur.execute('SELECT * FROM rooms WHERE id = %s', (room_id,))
     room = cur.fetchone()
 
+    # Use >= so no chits are missed at boundary
     cur.execute('''
         SELECT * FROM chits
-        WHERE room_id = %s AND sent_at > %s
+        WHERE room_id = %s AND sent_at >= %s
         ORDER BY sent_at ASC
     ''', (room_id, since))
     chits = [dict(c) for c in cur.fetchall()]
@@ -355,7 +358,7 @@ def poll(room_id):
     points = [dict(p) for p in cur.fetchall()]
 
     cur.close()
-    conn.close()
+    return_db(conn)
 
     return jsonify({
         'room': dict(room) if room else None,
@@ -387,7 +390,7 @@ def register_delegate():
         conn.commit()
 
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 @app.route('/api/delegates/<committee>', methods=['GET'])
@@ -419,7 +422,7 @@ def add_speaker():
           int(__import__('time').time() * 1000)))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 @app.route('/api/speaker/remove', methods=['POST'])
@@ -430,7 +433,7 @@ def remove_speaker():
     cur.execute('DELETE FROM speakers WHERE id = %s', (data.get('speaker_id'),))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 # ─── CHITS ────────────────────────────────
@@ -446,42 +449,32 @@ def send_chit():
 
     if not room or not room['is_open']:
         cur.close()
-        conn.close()
+        return_db(conn)
         return jsonify({'success': False, 'closed': True})
 
     text = data.get('text', '').strip()
     ai_score = calculate_ai_score(text)
 
     cur.execute('''
-        INSERT INTO chits (room_id, from_country, to_country, text, ai_score, is_marked, is_amendment, sent_at)
-        VALUES (%s, %s, %s, %s, %s, FALSE, FALSE, %s)
+        INSERT INTO chits (room_id, from_country, to_country, text, ai_score, sent_at)
+        VALUES (%s, %s, %s, %s, %s, %s)
     ''', (room_id, data.get('from_country'), data.get('to_country'),
           text, ai_score, int(__import__('time').time() * 1000)))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True, 'ai_score': ai_score})
 
 @app.route('/api/chit/mark', methods=['POST'])
 def mark_chit():
+    # Marking a chit deletes it immediately for everyone
     data = request.get_json()
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('UPDATE chits SET is_marked = NOT is_marked WHERE id = %s', (data.get('chit_id'),))
+    cur.execute('DELETE FROM chits WHERE id = %s', (data.get('chit_id'),))
     conn.commit()
     cur.close()
-    conn.close()
-    return jsonify({'success': True})
-
-@app.route('/api/chit/delete-marked', methods=['POST'])
-def delete_marked_chits():
-    data = request.get_json()
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM chits WHERE room_id = %s AND is_marked = TRUE', (data.get('room_id'),))
-    conn.commit()
-    cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 # ─── MOTIONS ──────────────────────────────
@@ -497,7 +490,7 @@ def submit_motion():
 
     if not room or not room['is_open']:
         cur.close()
-        conn.close()
+        return_db(conn)
         return jsonify({'success': False, 'closed': True})
 
     cur.execute('''
@@ -507,7 +500,7 @@ def submit_motion():
           data.get('details'), int(__import__('time').time() * 1000)))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 @app.route('/api/motion/delete', methods=['POST'])
@@ -518,7 +511,7 @@ def delete_motion():
     cur.execute('DELETE FROM motions WHERE id = %s', (data.get('motion_id'),))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 # ─── AMENDMENTS ───────────────────────────
@@ -534,7 +527,7 @@ def submit_amendment():
 
     if not room or not room['is_open']:
         cur.close()
-        conn.close()
+        return_db(conn)
         return jsonify({'success': False, 'closed': True})
 
     cur.execute('''
@@ -545,7 +538,7 @@ def submit_amendment():
           int(__import__('time').time() * 1000)))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 @app.route('/api/amendment/resolve', methods=['POST'])
@@ -557,7 +550,7 @@ def resolve_amendment():
                 (data.get('status'), data.get('amendment_id')))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 # ─── POINTS ───────────────────────────────
@@ -573,7 +566,7 @@ def raise_point():
           data.get('type'), int(__import__('time').time() * 1000)))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 @app.route('/api/point/dismiss', methods=['POST'])
@@ -584,12 +577,12 @@ def dismiss_point():
     cur.execute('DELETE FROM points WHERE id = %s', (data.get('point_id'),))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
-# ─── DOCUMENTS ────────────────────────────
-@app.route('/api/document/upload', methods=['POST'])
-def upload_document():
+# ─── DOCUMENTS (text-based, no file upload) ──
+@app.route('/api/document/submit', methods=['POST'])
+def submit_document():
     data = request.get_json()
     room_id = data.get('room_id')
 
@@ -600,48 +593,22 @@ def upload_document():
 
     if not room or not room['is_open']:
         cur.close()
-        conn.close()
+        return_db(conn)
         return jsonify({'success': False, 'closed': True})
 
-    ai_score = calculate_ai_score(data.get('text_sample', ''))
+    content = data.get('content', '')
+    ai_score = calculate_ai_score(content)
 
     cur.execute('''
-        INSERT INTO documents (room_id, country, type, file_name, public_id, download_url, ai_score, uploaded_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO documents (room_id, country, type, title, content, ai_score, uploaded_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     ''', (room_id, data.get('country'), data.get('doc_type'),
-          data.get('file_name'), data.get('public_id'),
-          data.get('download_url'), ai_score,
+          data.get('title'), content, ai_score,
           int(__import__('time').time() * 1000)))
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True, 'ai_score': ai_score})
-
-@app.route('/api/document/download', methods=['POST'])
-def download_document():
-    data = request.get_json()
-    try:
-        response = http_requests.get(data.get('url'), timeout=30)
-        if response.status_code != 200:
-            return jsonify({'error': 'File not found'}), 404
-
-        file_data = io.BytesIO(response.content)
-        file_data.seek(0)
-
-        cloudinary.uploader.destroy(data.get('public_id'), resource_type='raw')
-
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute('DELETE FROM documents WHERE id = %s', (data.get('doc_id'),))
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        return send_file(file_data, as_attachment=True,
-                         download_name=data.get('filename'),
-                         mimetype='application/pdf')
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 # ─── SECRETARIAT ──────────────────────────
 @app.route('/api/secretariat/all-rooms', methods=['GET'])
@@ -655,27 +622,14 @@ def all_rooms():
     for room in rooms:
         cur.execute('SELECT COUNT(*) as count FROM chits WHERE room_id = %s', (room['id'],))
         chit_count = cur.fetchone()['count']
-        cur.execute('SELECT COUNT(*) as count FROM chits WHERE room_id = %s AND is_marked = TRUE', (room['id'],))
-        marked_count = cur.fetchone()['count']
         cur.execute('SELECT COUNT(*) as count FROM delegates WHERE room_id = %s', (room['id'],))
         delegate_count = cur.fetchone()['count']
         result.append({**room, 'chit_count': chit_count,
-                        'marked_count': marked_count, 'delegate_count': delegate_count})
+                        'delegate_count': delegate_count})
 
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify(result)
-
-@app.route('/api/secretariat/delete-marked', methods=['POST'])
-def secretariat_delete_marked():
-    data = request.get_json()
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM chits WHERE room_id = %s AND is_marked = TRUE', (data.get('room_id'),))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return jsonify({'success': True})
 
 @app.route('/api/secretariat/conference-over', methods=['POST'])
 def conference_over():
@@ -691,7 +645,7 @@ def conference_over():
     cur.execute('DELETE FROM rooms')
     conn.commit()
     cur.close()
-    conn.close()
+    return_db(conn)
     return jsonify({'success': True})
 
 if __name__ == '__main__':

@@ -66,7 +66,6 @@
             <div class="speaker-country" id="del-current-speaker">Waiting for chair...</div>
             <div class="timer-display" id="del-timer">—</div>
             <div class="points-btns">
-              <button class="btn-point" onclick="raisePoint('POI')">Raise POI</button>
               <button class="btn-point" onclick="raisePoint('POO')">Raise POO</button>
               <button class="btn-point" onclick="raisePoint('PPP')">Raise PPP</button>
             </div>
@@ -124,36 +123,32 @@
 
     <!-- DOCUMENTS TAB -->
     <section class="tab-panel" id="tab-documents">
-      <div class="two-col">
+    <div class="two-col">
 
         <div class="card">
-          <div class="card-header"><h2>Upload document</h2></div>
-          <div class="compose">
+        <div class="card-header"><h2>Submit document</h2></div>
+        <div class="compose">
             <select id="doc-type">
-              <option value="Position Paper">Position Paper</option>
-              <option value="Draft Resolution">Draft Resolution</option>
-              <option value="Working Paper">Working Paper</option>
-              <option value="Private Directive">Private Directive</option>
-              <option value="Public Directive">Public Directive</option>
+            <option value="Position Paper">Position Paper</option>
+            <option value="Draft Resolution">Draft Resolution</option>
+            <option value="Working Paper">Working Paper</option>
+            <option value="Private Directive">Private Directive</option>
+            <option value="Public Directive">Public Directive</option>
             </select>
-            <div class="file-drop" id="file-drop">
-              <input type="file" id="doc-file" accept=".pdf" style="display:none">
-              <div class="file-drop-inner" onclick="document.getElementById('doc-file').click()">
-                <span id="file-label">Choose PDF file</span>
-              </div>
-            </div>
-            <button class="btn-primary submit-btn" id="upload-btn" onclick="uploadDocument()">Submit</button>
-          </div>
+            <input type="text" id="doc-title" placeholder="Document title (e.g. BR/GER-01)">
+            <textarea id="doc-content" placeholder="Paste your document content here..." rows="10"></textarea>
+            <button class="btn-primary submit-btn" id="upload-btn" onclick="submitDocument()">Submit</button>
+        </div>
         </div>
 
         <div class="card">
-          <div class="card-header"><h2>My submissions</h2></div>
-          <div class="list-body" id="my-documents">
+        <div class="card-header"><h2>My submissions</h2></div>
+        <div class="list-body" id="my-documents">
             <div class="empty-msg">Nothing submitted yet</div>
-          </div>
+        </div>
         </div>
 
-      </div>
+    </div>
     </section>
 
     <!-- AMENDMENTS TAB -->
