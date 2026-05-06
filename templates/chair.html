@@ -5,141 +5,186 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chair — MUN Command Pro</title>
   <link rel="stylesheet" href="/static/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="app-page">
+
 <div class="app-layout">
 
+  <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sidebar-header">
-      <span class="sidebar-logo">⬡ MUN Command Pro</span>
+    <div class="sidebar-top">
+      <div class="sidebar-brand">⬡ MUN Command Pro</div>
+      <div class="room-pill">
+        <span id="room-code-display">—</span>
+        <span class="room-pill-label">room code</span>
+      </div>
     </div>
-    <div class="room-badge">
-      <div class="room-code" id="room-code-display">—</div>
-      <div class="room-label">Room code</div>
-    </div>
+
     <nav class="sidebar-nav">
-      <div class="nav-item active" onclick="showTab('speakers', this)">Speakers</div>
-      <div class="nav-item" onclick="showTab('motions', this)">Motions <span class="nav-badge" id="badge-motions"></span></div>
-      <div class="nav-item" onclick="showTab('documents', this)">Documents <span class="nav-badge" id="badge-documents"></span></div>
-      <div class="nav-item" onclick="showTab('chits', this)">Chits <span class="nav-badge" id="badge-chits"></span></div>
-      <div class="nav-item" onclick="showTab('amendments', this)">Amendments <span class="nav-badge" id="badge-amendments"></span></div>
-      <div class="nav-item" onclick="showTab('delegates', this)">Delegates</div>
+      <button class="nav-btn active" data-tab="speakers">
+        Speakers
+      </button>
+      <button class="nav-btn" data-tab="motions">
+        Motions
+        <span class="nav-count" id="count-motions"></span>
+      </button>
+      <button class="nav-btn" data-tab="chits">
+        Chits
+        <span class="nav-count" id="count-chits"></span>
+      </button>
+      <button class="nav-btn" data-tab="amendments">
+        Amendments
+        <span class="nav-count" id="count-amendments"></span>
+      </button>
+      <button class="nav-btn" data-tab="documents">
+        Documents
+        <span class="nav-count" id="count-documents"></span>
+      </button>
+      <button class="nav-btn" data-tab="delegates">
+        Delegates
+      </button>
     </nav>
-    <div class="sidebar-footer">
-      <div class="sidebar-name" id="chair-name-display">—</div>
-      <div class="sidebar-cmte" id="committee-display">—</div>
-      <button class="close-room-btn" onclick="closeRoom()">Close Room</button>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-info">
+        <span id="chair-name-display">—</span>
+        <span id="committee-display" class="sidebar-committee">—</span>
+      </div>
+      <div class="room-toggle">
+        <span class="toggle-label" id="room-status-label">Room open</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="room-toggle-input" checked onchange="toggleRoom(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
   </aside>
 
-  <main class="main-content">
-    <header class="topbar">
-      <div class="topbar-title" id="page-title">Speakers</div>
-      <div class="topbar-status"><span class="status-dot"></span> Session active</div>
+  <!-- MAIN CONTENT -->
+  <main class="main-area">
+
+    <header class="main-header">
+      <h1 class="main-title" id="main-title">Speakers</h1>
+      <div class="header-status">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Live</span>
+      </div>
     </header>
 
+    <!-- CLOSED BANNER -->
+    <div class="closed-banner" id="closed-banner" style="display:none">
+      Room is currently closed — delegates cannot submit anything
+    </div>
+
     <!-- SPEAKERS TAB -->
-    <section class="tab-content active" id="tab-speakers">
+    <section class="tab-panel active" id="tab-speakers">
       <div class="two-col">
-        <div class="panel">
-          <div class="panel-header">
-            <h3>Current speaker</h3>
-            <button class="btn-solid" onclick="nextSpeakerBtn()">Next →</button>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Current speaker</h2>
+            <button class="btn-primary" onclick="nextSpeaker()">Next →</button>
           </div>
-          <div class="speaker-display">
-            <div class="speaker-name" id="current-speaker-name">No speaker selected</div>
-            <div class="timer" id="timer-display">01:30</div>
-            <div class="timer-btns">
-              <button class="btn-outline" onclick="startTimer()">▶ Start</button>
-              <button class="btn-outline" onclick="pauseTimer()">⏸ Pause</button>
-              <button class="btn-outline" onclick="resetTimer()">↺ Reset</button>
+          <div class="speaker-stage">
+            <div class="speaker-country" id="current-speaker-name">No speaker</div>
+            <div class="timer-display" id="timer-display">01:30</div>
+            <div class="timer-controls">
+              <button class="btn-secondary" onclick="startTimer()">▶ Start</button>
+              <button class="btn-secondary" onclick="pauseTimer()">⏸ Pause</button>
+              <button class="btn-secondary" onclick="resetTimer()">↺ Reset</button>
             </div>
             <div class="timer-set">
-              <label>Speaking time (seconds)</label>
-              <input type="number" id="speaker-time" value="90" min="30" max="300" style="width:70px" />
+              <label>Speaking time (sec)</label>
+              <input type="number" id="speaker-time" value="90" min="30" max="300">
             </div>
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-header"><h3>Speakers queue</h3></div>
-          <div class="searchable-dropdown">
-            <input type="text" id="speaker-search" placeholder="Search country..." oninput="filterDelegates()" />
-            <div class="dropdown-list" id="delegate-dropdown"></div>
+        <div class="card">
+          <div class="card-header">
+            <h2>Queue</h2>
           </div>
-          <div class="list-area" id="speakers-queue">
-            <div class="empty-state">No speakers queued</div>
+          <div class="search-box">
+            <input
+              type="text"
+              id="speaker-search"
+              placeholder="Search country..."
+              oninput="filterSpeakerSearch()"
+              onfocus="showDropdown()"
+            >
+            <div class="search-dropdown" id="speaker-dropdown"></div>
+          </div>
+          <div class="list-body" id="speakers-queue">
+            <div class="empty-msg">No speakers queued</div>
           </div>
         </div>
+
       </div>
 
-      <div class="panel">
-        <div class="panel-header"><h3>POI requests</h3></div>
-        <div class="list-area" id="poi-list">
-          <div class="empty-state">No POI requests</div>
+      <div class="card">
+        <div class="card-header"><h2>Points raised</h2></div>
+        <div class="list-body" id="points-list">
+          <div class="empty-msg">No points raised</div>
         </div>
       </div>
     </section>
 
     <!-- MOTIONS TAB -->
-    <section class="tab-content" id="tab-motions">
-      <div class="panel">
-        <div class="panel-header">
-          <h3>Pending motions</h3>
-          <button class="btn-solid" onclick="openModal('modal-add-motion')">+ Add</button>
+    <section class="tab-panel" id="tab-motions">
+      <div class="card">
+        <div class="card-header">
+          <h2>Pending motions</h2>
+          <button class="btn-primary" onclick="openModal('modal-motion')">+ Add</button>
         </div>
-        <div class="list-area" id="motions-list">
-          <div class="empty-state">No motions submitted</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- DOCUMENTS TAB -->
-    <section class="tab-content" id="tab-documents">
-      <div class="panel">
-        <div class="panel-header">
-          <h3>Submitted documents</h3>
-          <span class="panel-sub">Download deletes from storage</span>
-        </div>
-        <div class="list-area" id="documents-list">
-          <div class="empty-state">No documents submitted</div>
+        <div class="list-body" id="motions-list">
+          <div class="empty-msg">No motions</div>
         </div>
       </div>
     </section>
 
     <!-- CHITS TAB -->
-    <section class="tab-content" id="tab-chits">
-      <div class="panel">
-        <div class="panel-header">
-          <h3>All chits</h3>
-          <span class="panel-sub">Chair sees all</span>
+    <section class="tab-panel" id="tab-chits">
+      <div class="card">
+        <div class="card-header">
+          <h2>All chits</h2>
+          <button class="btn-secondary" onclick="deleteMarkedChits()">Delete marked</button>
         </div>
-        <div class="list-area" id="chits-list">
-          <div class="empty-state">No chits yet</div>
+        <div class="list-body" id="chits-list">
+          <div class="empty-msg">No chits</div>
         </div>
       </div>
     </section>
 
     <!-- AMENDMENTS TAB -->
-    <section class="tab-content" id="tab-amendments-chair">
-      <div class="panel">
-        <div class="panel-header"><h3>Pending amendments</h3></div>
-        <div class="list-area" id="amendments-chair-list">
-          <div class="empty-state">No amendments</div>
+    <section class="tab-panel" id="tab-amendments">
+      <div class="card">
+        <div class="card-header"><h2>Amendments</h2></div>
+        <div class="list-body" id="amendments-list">
+          <div class="empty-msg">No amendments</div>
         </div>
       </div>
     </section>
-    
+
+    <!-- DOCUMENTS TAB -->
+    <section class="tab-panel" id="tab-documents">
+      <div class="card">
+        <div class="card-header"><h2>Submitted documents</h2></div>
+        <div class="list-body" id="documents-list">
+          <div class="empty-msg">No documents</div>
+        </div>
+      </div>
+    </section>
+
     <!-- DELEGATES TAB -->
-    <section class="tab-content" id="tab-delegates">
-      <div class="panel">
-        <div class="panel-header">
-          <h3>Connected delegates</h3>
-          <span class="panel-sub" id="delegate-count">0 online</span>
+    <section class="tab-panel" id="tab-delegates">
+      <div class="card">
+        <div class="card-header">
+          <h2>Connected delegates</h2>
+          <span id="delegate-count" class="count-badge">0</span>
         </div>
         <div class="delegates-grid" id="delegates-grid">
-          <div class="empty-state">No delegates connected</div>
+          <div class="empty-msg">No delegates connected</div>
         </div>
       </div>
     </section>
@@ -148,10 +193,10 @@
 </div>
 
 <!-- ADD MOTION MODAL -->
-<div class="modal-overlay" id="modal-add-motion">
+<div class="modal-overlay" id="modal-motion">
   <div class="modal">
     <h3>Add motion</h3>
-    <select id="motion-type-chair">
+    <select id="motion-type">
       <option value="mod">Moderated Caucus</option>
       <option value="unmod">Unmoderated Caucus</option>
       <option value="challenge">Challenge</option>
@@ -160,16 +205,16 @@
       <option value="extend">Extension of Speakers List</option>
       <option value="order">Point of Order</option>
     </select>
-    <input type="text" id="motion-country-chair" placeholder="Proposed by (country)" />
-    <input type="text" id="motion-details-chair" placeholder="Details (e.g. 10 min, 1 min speaking)" />
+    <input type="text" id="motion-country" placeholder="Proposed by (country)">
+    <input type="text" id="motion-details" placeholder="Details (e.g. 10 min, 1 min speaking)">
     <div class="modal-actions">
-      <button class="btn-outline" onclick="closeModal('modal-add-motion')">Cancel</button>
-      <button class="btn-solid" onclick="addMotionChair()">Submit</button>
+      <button class="btn-secondary" onclick="closeModal('modal-motion')">Cancel</button>
+      <button class="btn-primary" onclick="submitMotionFromChair()">Submit</button>
     </div>
   </div>
 </div>
 
-<script type="module" src="/static/app.js"></script>
-<script type="module" src="/static/chair.js"></script>
+<script src="/static/app.js" type="module"></script>
+<script src="/static/chair.js" type="module"></script>
 </body>
 </html>

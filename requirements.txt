@@ -1,8 +1,8 @@
 flask
-firebase-admin
-google-genai
-python-dotenv
+psycopg2-binary
 cloudinary
 google-api-python-client
 google-auth
 google-auth-httplib2
+python-dotenv
+requests

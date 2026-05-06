@@ -5,20 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MUN Command Pro</title>
   <link rel="stylesheet" href="/static/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
-<body class="landing">
-  <div class="landing-container">
+<body class="landing-page">
+
+  <div class="landing-wrap">
     <div class="landing-logo">⬡ MUN Command Pro</div>
-    <p class="landing-sub">Enter your access code to continue</p>
+    <p class="landing-tagline">Enter your access code to continue</p>
 
     <div class="login-card">
-      <input type="text" id="access-code" placeholder="Enter your code (e.g. CHAIR-A1B2)" autocomplete="off" />
+      <input
+        type="text"
+        id="access-code"
+        placeholder="Enter your code"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div class="login-error" id="login-error"></div>
       <button id="login-btn">Continue</button>
-      <div class="error-msg" id="login-error"></div>
-      <div class="login-hint">Codes are provided by your conference secretariat</div>
+      <p class="login-hint">Codes are provided by your conference secretariat</p>
     </div>
   </div>
-  <script type="module" src="/static/app.js"></script>
+
+  <script src="/static/app.js" type="module"></script>
 </body>
 </html>

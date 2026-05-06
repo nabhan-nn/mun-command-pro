@@ -1,65 +1,79 @@
-/* ── MUN Command Pro — Light Theme ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── RESET & BASE ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* box-sizing: border-box means padding and border are included
+   in the element's total width/height. Without this, adding
+   padding makes elements wider than expected — very confusing. */
 
 body {
   font-family: 'DM Sans', sans-serif;
-  background: #f7f6f3;
+  background: #f5f4f1;
   color: #111;
   font-size: 14px;
+  line-height: 1.5;
 }
 
-/* ── LANDING ── */
-.landing {
+/* ── LANDING PAGE ── */
+.landing-page {
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
 }
-.landing-container {
+
+/* min-height: 100vh means at least the full viewport height.
+   display flex + align-items center + justify-content center
+   = perfectly centres the login card both vertically and horizontally */
+
+.landing-wrap {
   width: 100%;
-  max-width: 780px;
-  padding: 40px 24px;
+  max-width: 420px;
+  padding: 24px;
   text-align: center;
 }
+
 .landing-logo {
-  font-size: 28px;
-  font-weight: 500;
+  font-size: 26px;
+  font-weight: 600;
   margin-bottom: 8px;
+  color: #111;
 }
-.landing-sub {
+
+.landing-tagline {
+  font-size: 14px;
   color: #666;
-  margin-bottom: 40px;
-  font-size: 15px;
+  margin-bottom: 32px;
 }
-.landing-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  text-align: left;
-}
-.card {
+
+.login-card {
   background: #fff;
   border: 0.5px solid #ddd;
   border-radius: 12px;
   padding: 28px 24px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
-.card h2 { font-size: 18px; font-weight: 500; }
-.card p  { color: #666; font-size: 13px; margin-bottom: 4px; }
-.code-display {
-  font-size: 28px;
-  font-weight: 500;
-  letter-spacing: 3px;
-  background: #EEEDFE;
-  color: #26215C;
-  padding: 12px;
-  border-radius: 8px;
+
+/* gap: 12px adds space between all direct children
+   without needing margin on each one individually */
+
+.login-error {
+  font-size: 12px;
+  color: #c0392b;
+  min-height: 16px;
+  text-align: left;
+}
+
+.login-hint {
+  font-size: 11px;
+  color: #aaa;
   text-align: center;
-  margin: 8px 0;
 }
-.error-msg { color: #c0392b; font-size: 12px; min-height: 16px; }
 
 /* ── APP LAYOUT ── */
 .app-layout {
@@ -67,6 +81,10 @@ body {
   height: 100vh;
   overflow: hidden;
 }
+
+/* height: 100vh = exactly the viewport height
+   overflow: hidden = prevents the whole page from scrolling.
+   Instead, only the main content area scrolls inside itself */
 
 /* ── SIDEBAR ── */
 .sidebar {
@@ -77,108 +95,456 @@ body {
   flex-direction: column;
   flex-shrink: 0;
 }
-.sidebar-header {
+
+/* flex-shrink: 0 prevents the sidebar from getting smaller
+   when the window is narrow. It always stays 200px wide. */
+
+.sidebar-top {
   padding: 16px;
   border-bottom: 0.5px solid #e0e0e0;
 }
-.sidebar-logo { font-size: 13px; font-weight: 500; }
-.room-badge {
-  margin: 12px;
+
+.sidebar-brand {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #111;
+}
+
+.room-pill {
   background: #EEEDFE;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
 }
-.room-code { font-size: 18px; font-weight: 500; letter-spacing: 2px; color: #26215C; }
-.room-label { font-size: 10px; color: #534AB7; margin-top: 2px; }
-.sidebar-nav { flex: 1; padding: 8px 0; }
-.nav-item {
+
+.room-pill span:first-child {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #26215C;
+}
+
+.room-pill-label {
+  font-size: 10px;
+  color: #534AB7;
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* flex: 1 makes the nav take up all space between
+   the top section and the bottom section */
+
+.nav-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
   padding: 10px 16px;
-  font-size: 13px;
-  color: #555;
-  cursor: pointer;
+  background: none;
+  border: none;
   border-right: 2px solid transparent;
-  user-select: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
 }
-.nav-item:hover { background: #f7f6f3; color: #111; }
-.nav-item.active { color: #111; background: #EEEDFE; border-right-color: #534AB7; font-weight: 500; }
-.nav-badge {
+
+/* transition: all 0.15s makes the hover effect animate
+   smoothly over 0.15 seconds instead of snapping instantly */
+
+.nav-btn:hover {
+  background: #f5f4f1;
+  color: #111;
+}
+
+.nav-btn.active {
+  background: #EEEDFE;
+  color: #111;
+  border-right-color: #534AB7;
+  font-weight: 500;
+}
+
+.nav-count {
   background: #534AB7;
   color: #fff;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   padding: 1px 6px;
   border-radius: 10px;
   display: none;
 }
-.nav-badge.visible { display: inline; }
-.sidebar-footer { padding: 12px 16px; border-top: 0.5px solid #e0e0e0; }
-.sidebar-name { font-size: 12px; font-weight: 500; }
-.sidebar-cmte { font-size: 11px; color: #666; margin-top: 2px; }
 
-/* ── MAIN ── */
-.main-content {
+.nav-count.visible {
+  display: inline;
+}
+
+.sidebar-bottom {
+  padding: 14px 16px;
+  border-top: 0.5px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-info span:first-child {
+  font-size: 12px;
+  font-weight: 500;
+  color: #111;
+}
+
+.sidebar-committee {
+  font-size: 11px;
+  color: #888;
+}
+
+/* ── ROOM TOGGLE ── */
+.room-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggle-label {
+  font-size: 12px;
+  color: #555;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* opacity: 0 hides the actual checkbox input but keeps it
+   functional. We style the visual part separately. */
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+/* ::before creates a pseudo-element — a visual element
+   that doesn't exist in the HTML. We use it for the
+   white circle inside the toggle */
+
+.toggle-switch input:checked + .toggle-slider {
+  background: #1D9E75;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(16px);
+}
+
+/* When the checkbox is checked, the + selector targets
+   the next sibling (the slider) and moves the circle right */
+
+/* ── CLOSE ROOM BUTTONS ── */
+.conference-over-btn {
+  width: 100%;
+  background: #FCEBEB;
+  border: 1.5px solid #E24B4A;
+  color: #791F1F;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+
+.conference-over-btn:hover {
+  background: #f8d7d7;
+}
+
+/* ── MAIN AREA ── */
+.main-area {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
 }
-.topbar {
-  padding: 12px 20px;
-  border-bottom: 0.5px solid #e0e0e0;
+
+/* min-width: 0 is a flex quirk fix — without it, flex children
+   won't shrink below their content size, causing overflow */
+
+.main-header {
+  padding: 14px 20px;
   background: #fff;
+  border-bottom: 0.5px solid #e0e0e0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
 }
-.topbar-title { font-size: 15px; font-weight: 500; }
-.topbar-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; }
-.status-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #1D9E75;
-  box-shadow: 0 0 5px #1D9E75;
+
+.main-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
 }
 
-/* ── TABS ── */
-.tab-content { display: none; padding: 16px; overflow-y: auto; flex: 1; }
-.tab-content.active { display: block; }
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #888;
+}
 
-/* ── PANELS ── */
-.panel {
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1D9E75;
+  box-shadow: 0 0 5px #1D9E75;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* @keyframes defines an animation. pulse makes the
+   green dot fade in and out to show the app is live */
+
+/* ── CLOSED BANNER ── */
+.closed-banner {
+  background: #FAEEDA;
+  border-bottom: 0.5px solid #FAC775;
+  padding: 10px 20px;
+  font-size: 13px;
+  color: #633806;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* ── TAB PANELS ── */
+.tab-panel {
+  display: none;
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* Only the active tab is visible. JavaScript switches
+   the active class to show/hide tabs */
+
+/* ── CARDS ── */
+.card {
   background: #fff;
   border: 0.5px solid #e0e0e0;
   border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
-.panel-header {
-  padding: 10px 16px;
+
+.card-header {
+  padding: 12px 16px;
+  background: #fafafa;
   border-bottom: 0.5px solid #e0e0e0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fafafa;
 }
-.panel-header h3 { font-size: 13px; font-weight: 500; }
-.panel-sub { font-size: 11px; color: #888; }
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.list-area { padding: 10px; min-height: 60px; }
-.empty-state { text-align: center; padding: 20px; font-size: 12px; color: #aaa; font-style: italic; }
 
-/* ── SPEAKER DISPLAY ── */
-.speaker-display { padding: 20px; text-align: center; }
-.speaker-name { font-size: 18px; font-weight: 500; margin-bottom: 10px; }
-.timer { font-size: 42px; font-weight: 300; letter-spacing: 4px; margin-bottom: 12px; }
-.timer.warning { color: #BA7517; }
-.timer.danger  { color: #c0392b; }
-.timer-btns { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; }
-.timer-set { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: #666; }
-.timer-set input { width: 60px; text-align: center; }
+.card-header h2 {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111;
+}
 
-/* ── ROW ITEMS ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* grid-template-columns: 1fr 1fr creates two equal columns.
+   1fr means "one fraction of available space" */
+
+.list-body {
+  padding: 10px;
+  min-height: 60px;
+}
+
+.empty-msg {
+  text-align: center;
+  padding: 20px;
+  color: #bbb;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* ── SPEAKER STAGE ── */
+.speaker-stage {
+  padding: 20px;
+  text-align: center;
+}
+
+.speaker-country {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 10px;
+}
+
+.timer-display {
+  font-size: 44px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  color: #111;
+  margin-bottom: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* font-variant-numeric: tabular-nums makes all numbers
+   the same width so the timer doesn't jump around
+   as digits change */
+
+.timer-display.warning { color: #BA7517; }
+.timer-display.danger  { color: #c0392b; }
+
+.timer-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.timer-set {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #888;
+}
+
+.timer-set input {
+  width: 60px;
+  text-align: center;
+}
+
+.points-btns {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-point {
+  background: #f5f4f1;
+  border: 1.5px solid #ddd;
+  color: #111;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+
+.btn-point:hover {
+  background: #EEEDFE;
+  border-color: #AFA9EC;
+}
+
+/* ── SEARCH DROPDOWN ── */
+.search-box {
+  padding: 10px;
+  position: relative;
+}
+
+/* position: relative on the container makes it the
+   reference point for the dropdown's absolute positioning */
+
+.search-dropdown {
+  display: none;
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  background: #fff;
+  border: 0.5px solid #ddd;
+  border-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* position: absolute removes the element from normal flow
+   and places it relative to the nearest positioned ancestor.
+   z-index: 50 makes it appear above other elements */
+
+.search-dropdown.open {
+  display: block;
+}
+
+.dropdown-item {
+  padding: 9px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #111;
+  border-bottom: 0.5px solid #f0f0f0;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: #EEEDFE;
+}
+
+/* ── LIST ITEMS ── */
 .list-row {
   display: flex;
   align-items: flex-start;
@@ -186,60 +552,171 @@ body {
   padding: 10px 12px;
   border-bottom: 0.5px solid #f0f0f0;
 }
-.list-row:last-child { border-bottom: none; }
+
+.list-row:last-child {
+  border-bottom: none;
+}
+
 .row-tag {
   display: inline-block;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   padding: 2px 8px;
   border-radius: 10px;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
+
 .tag-mod        { background: #E6F1FB; color: #0C447C; }
 .tag-unmod      { background: #E1F5EE; color: #085041; }
 .tag-challenge  { background: #FCEBEB; color: #791F1F; }
 .tag-suspension { background: #FAEEDA; color: #633806; }
-.tag-adjourn    { background: #f0f0f0;  color: #444; }
+.tag-adjourn    { background: #f0f0f0; color: #444; }
 .tag-extend     { background: #FBEAF0; color: #72243E; }
 .tag-order      { background: #FAEEDA; color: #633806; }
 .tag-pp         { background: #EEEDFE; color: #26215C; }
 .tag-dr         { background: #E1F5EE; color: #085041; }
 .tag-wp         { background: #E6F1FB; color: #0C447C; }
-.tag-amend      { background: #FBEAF0; color: #72243E; }
-.row-country    { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
-.row-detail     { font-size: 11px; color: #666; }
-.row-btns       { display: flex; gap: 6px; flex-shrink: 0; margin-left: 10px; }
+.tag-pd         { background: #FBEAF0; color: #72243E; }
+.tag-poi        { background: #FAEEDA; color: #633806; }
+.tag-poo        { background: #FCEBEB; color: #791F1F; }
+.tag-ppp        { background: #E1F5EE; color: #085041; }
+.tag-pending    { background: #f0f0f0; color: #555; }
+.tag-accepted   { background: #E1F5EE; color: #085041; }
+.tag-rejected   { background: #FCEBEB; color: #791F1F; }
+
+.row-main { font-size: 13px; font-weight: 500; color: #111; margin-bottom: 2px; }
+.row-sub  { font-size: 11px; color: #888; margin-top: 1px; }
+.row-actions { display: flex; gap: 6px; flex-shrink: 0; margin-left: 10px; }
 
 /* ── AI BADGE ── */
-.ai-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.ai-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
 .ai-low  { background: #E1F5EE; color: #085041; }
 .ai-mid  { background: #FAEEDA; color: #633806; }
 .ai-high { background: #FCEBEB; color: #791F1F; }
 
+/* ── MARK TOGGLE ── */
+.mark-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #888;
+  cursor: pointer;
+}
+
+.mark-toggle input[type="checkbox"] {
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
 /* ── CHIT ITEMS ── */
-.chit-item { padding: 10px 12px; border-bottom: 0.5px solid #f0f0f0; }
+.chit-item {
+  padding: 10px 12px;
+  border-bottom: 0.5px solid #f0f0f0;
+}
+
 .chit-item:last-child { border-bottom: none; }
-.chit-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
-.chit-route  { font-size: 11px; color: #666; }
+
+.chit-item.marked {
+  background: #fafafa;
+  opacity: 0.6;
+}
+
+/* marked chits are greyed out but still visible */
+
+.chit-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.chit-route { font-size: 11px; color: #888; }
 .chit-route strong { color: #111; }
-.chit-time   { font-size: 10px; color: #aaa; }
-.chit-body   { font-size: 13px; line-height: 1.5; margin-bottom: 7px; }
+.chit-time  { font-size: 10px; color: #bbb; }
+.chit-body  { font-size: 13px; color: #111; line-height: 1.5; margin-bottom: 7px; }
 .chit-footer { display: flex; align-items: center; justify-content: space-between; }
 
-/* ── SPEAKERS QUEUE ITEMS ── */
-.speaker-item {
+/* ── WHATSAPP THREADS ── */
+.conv-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 0.5px solid #e0e0e0;
-  margin-bottom: 5px;
-  font-size: 13px;
-  background: #f7f6f3;
+  padding: 12px 14px;
+  border-bottom: 0.5px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.1s;
 }
-.speaker-item:first-child { background: #EEEDFE; border-color: #AFA9EC; font-weight: 500; }
-.speaker-num { font-size: 10px; color: #888; margin-right: 6px; }
+
+.conv-item:hover { background: #f5f4f1; }
+.conv-item:last-child { border-bottom: none; }
+.conv-name { font-size: 13px; font-weight: 500; color: #111; }
+.conv-preview { font-size: 11px; color: #888; margin-top: 2px; }
+.conv-unread {
+  background: #534AB7;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.thread-card { margin-top: 14px; }
+
+.thread-messages {
+  padding: 12px;
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thread-msg {
+  max-width: 72%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.thread-msg.sent {
+  align-self: flex-end;
+  background: #EEEDFE;
+  border-bottom-right-radius: 2px;
+}
+
+.thread-msg.received {
+  align-self: flex-start;
+  background: #f5f4f1;
+  border-bottom-left-radius: 2px;
+}
+
+.thread-msg-meta {
+  font-size: 10px;
+  color: #aaa;
+  margin-top: 4px;
+}
+
+.thread-reply {
+  padding: 10px 12px;
+  border-top: 0.5px solid #e0e0e0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.thread-reply textarea {
+  flex: 1;
+  margin: 0;
+}
 
 /* ── DELEGATES GRID ── */
 .delegates-grid {
@@ -248,25 +725,64 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 8px;
 }
+
+/* repeat(auto-fill, minmax(130px, 1fr)) automatically creates
+   as many columns as fit, each at least 130px wide */
+
 .delegate-chip {
-  background: #f7f6f3;
+  background: #f5f4f1;
   border: 0.5px solid #e0e0e0;
   border-radius: 8px;
   padding: 10px;
   text-align: center;
 }
-.delegate-chip-name { font-size: 12px; font-weight: 500; margin-bottom: 3px; }
-.delegate-chip-code { font-size: 10px; color: #534AB7; }
-.online-dot { width: 5px; height: 5px; border-radius: 50%; background: #1D9E75; display: inline-block; margin-right: 4px; }
+
+.delegate-name { font-size: 12px; font-weight: 500; color: #111; margin-bottom: 3px; }
+.delegate-code { font-size: 10px; color: #888; }
+
+/* ── FILE UPLOAD ── */
+.file-drop {
+  border: 1.5px dashed #ccc;
+  border-radius: 6px;
+  padding: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  color: #888;
+  font-size: 13px;
+}
+
+.file-drop:hover { border-color: #534AB7; color: #534AB7; }
+.file-drop.has-file { border-color: #1D9E75; color: #085041; background: #E1F5EE; }
+
+/* ── STATS (SECRETARIAT) ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-box {
+  background: #fff;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+}
+
+.stat-num { font-size: 34px; font-weight: 600; color: #111; }
+.stat-lbl { font-size: 11px; color: #888; margin-top: 4px; }
 
 /* ── COMPOSE AREAS ── */
-.compose-area {
+.compose {
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-.chit-warning {
+
+.profanity-warning {
   background: #FCEBEB;
   border: 0.5px solid #F7C1C1;
   border-radius: 6px;
@@ -274,74 +790,84 @@ body {
   font-size: 12px;
   color: #791F1F;
 }
-.file-upload-area {
-  position: relative;
-}
-.file-upload-area input[type="file"] {
-  position: absolute;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-}
-.file-upload-area label {
-  display: block;
-  padding: 10px;
-  border: 1.5px dashed #bbb;
-  border-radius: 6px;
-  text-align: center;
-  font-size: 13px;
-  color: #666;
-  cursor: pointer;
-}
-.ai-preview {
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: #f7f6f3;
-}
 
-/* ── BUTTONS ── */
-input, select, textarea {
-  background: #f7f6f3;
-  border: 1.5px solid #ccc;
+/* ── INPUTS ── */
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  background: #f5f4f1;
+  border: 1.5px solid #ddd;
   border-radius: 6px;
   color: #111;
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
-  padding: 8px 10px;
-  width: 100%;
+  padding: 9px 11px;
   outline: none;
+  transition: border-color 0.15s;
 }
-input:focus, select:focus, textarea:focus { border-color: #534AB7; }
-textarea { resize: vertical; }
-select { cursor: pointer; }
 
-.btn-solid {
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #534AB7;
+}
+
+textarea { resize: vertical; }
+
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  padding-right: 30px;
+}
+
+/* appearance: none removes the browser's default dropdown arrow
+   so we can add our own custom arrow using background-image */
+
+/* ── BUTTONS ── */
+.btn-primary {
   background: #111;
   color: #fff;
   border: none;
-  padding: 8px 16px;
+  padding: 9px 18px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
 }
-.btn-solid:hover { background: #333; }
 
-.btn-outline {
+.btn-primary:hover { background: #333; }
+
+.btn-primary:disabled,
+.submit-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* :disabled styles the button when disabled=true is set.
+   cursor: not-allowed shows the no symbol on hover */
+
+.btn-secondary {
   background: #fff;
   color: #111;
   border: 1.5px solid #111;
-  padding: 6px 14px;
+  padding: 7px 16px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
 }
-.btn-outline:hover { background: #f7f6f3; }
+
+.btn-secondary:hover { background: #f5f4f1; }
 
 .btn-sm {
   background: #fff;
@@ -353,33 +879,46 @@ select { cursor: pointer; }
   font-weight: 500;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
 }
-.btn-sm:hover { background: #f7f6f3; }
 
-.mark-btn {
-  background: #f7f6f3;
-  border: 1.5px solid #111;
-  color: #111;
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 500;
+.btn-sm:hover { background: #f5f4f1; }
+
+.btn-sm.accept { border-color: #1D9E75; color: #085041; }
+.btn-sm.accept:hover { background: #E1F5EE; }
+.btn-sm.reject { border-color: #E24B4A; color: #791F1F; }
+.btn-sm.reject:hover { background: #FCEBEB; }
+
+.count-badge {
+  background: #534AB7;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
 }
-.mark-btn:hover { background: #e8e8e8; }
 
-/* ── MODAL ── */
+/* ── MODALS ── */
 .modal-overlay {
   display: none;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(3px);
   z-index: 100;
   align-items: center;
   justify-content: center;
 }
-.modal-overlay.open { display: flex; }
+
+/* position: fixed means it stays in place even when you scroll.
+   inset: 0 is shorthand for top/right/bottom/left all = 0
+   which makes it cover the entire screen.
+   backdrop-filter: blur adds a frosted glass effect behind it */
+
+.modal-overlay.open {
+  display: flex;
+}
+
 .modal {
   background: #fff;
   border: 0.5px solid #ddd;
@@ -389,112 +928,24 @@ select { cursor: pointer; }
   max-width: 380px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-.card button {
-  background: #111;
-  color: #fff;
-  border: none;
-  padding: 9px 18px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  width: 100%;
-}
-/* ── LOGIN PAGE ── */
-.login-card {
-  background: #fff;
-  border: 0.5px solid #ddd;
-  border-radius: 12px;
-  padding: 32px 28px;
-  max-width: 420px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
   gap: 12px;
 }
-.login-hint { font-size: 11px; color: #aaa; text-align: center; }
 
-/* ── CLOSE ROOM BUTTON ── */
-.close-room-btn {
-  width: 100%;
-  margin-top: 10px;
-  background: #FCEBEB;
-  border: 1.5px solid #E24B4A;
-  color: #791F1F;
-  padding: 7px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-}
-.close-room-btn:hover { background: #f8d7d7; }
-
-/* ── SEARCHABLE DROPDOWN ── */
-.searchable-dropdown { padding: 10px 10px 0; position: relative; }
-.dropdown-list {
-  display: none;
-  position: absolute;
-  left: 10px; right: 10px;
-  background: #fff;
-  border: 0.5px solid #ddd;
-  border-radius: 6px;
-  max-height: 180px;
-  overflow-y: auto;
-  z-index: 50;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-.dropdown-item {
-  padding: 8px 12px;
-  font-size: 13px;
-  cursor: pointer;
+.modal h3 {
+  font-size: 16px;
+  font-weight: 600;
   color: #111;
 }
-.dropdown-item:hover { background: #EEEDFE; }
-.dropdown-item.empty { color: #aaa; cursor: default; font-style: italic; }
 
-/* ── STATS GRID ── */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.stat-card {
-  background: #fff;
-  border: 0.5px solid #e0e0e0;
-  border-radius: 10px;
-  padding: 20px;
-  text-align: center;
-}
-/* ── THREADS ── */
-.conversation-item {
+.modal-actions {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border-bottom: 0.5px solid #f0f0f0;
-  cursor: pointer;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
 }
-.conversation-item:hover { background: #f7f6f3; }
-.conversation-item:last-child { border-bottom: none; }
-.conv-name { font-size: 13px; font-weight: 500; color: #111; }
-.conv-preview { font-size: 11px; color: #888; margin-top: 2px; }
-.conv-badge { background: #534AB7; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 10px; }
 
-.thread-messages { padding: 12px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-.thread-msg { max-width: 75%; padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
-.thread-msg.sent { align-self: flex-end; background: #EEEDFE; color: #111; border-bottom-right-radius: 2px; }
-.thread-msg.received { align-self: flex-start; background: #f7f6f3; color: #111; border-bottom-left-radius: 2px; }
-.thread-msg-meta { font-size: 10px; color: #aaa; margin-top: 3px; }
-.thread-reply { padding: 12px; border-top: 0.5px solid #e0e0e0; display: flex; gap: 8px; align-items: flex-end; }
-.thread-reply textarea { flex: 1; margin: 0; height: 60px; }
-.stat-number { font-size: 36px; font-weight: 500; color: #111; }
-.stat-label { font-size: 12px; color: #888; margin-top: 4px; }
-
-.card button:hover { background: #333; }
-.modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #bbb; }

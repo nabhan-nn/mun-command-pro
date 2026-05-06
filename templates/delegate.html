@@ -5,119 +5,130 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delegate — MUN Command Pro</title>
   <link rel="stylesheet" href="/static/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="app-page">
+
 <div class="app-layout">
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sidebar-header">
-      <span class="sidebar-logo">⬡ MUN Command Pro</span>
+    <div class="sidebar-top">
+      <div class="sidebar-brand">⬡ MUN Command Pro</div>
+      <div class="room-pill">
+        <span id="del-room-code">—</span>
+        <span class="room-pill-label">room code</span>
+      </div>
     </div>
-    <div class="room-badge">
-      <div class="room-code" id="del-room-code">—</div>
-      <div class="room-label">Room code</div>
-    </div>
+
     <nav class="sidebar-nav">
-      <div class="nav-item active" onclick="showTab('session', this)">Session</div>
-      <div class="nav-item" onclick="showTab('chits', this)">Chits <span class="nav-badge" id="badge-inbox"></span></div>
-      <div class="nav-item" onclick="showTab('documents', this)">Documents</div>
-      <div class="nav-item" onclick="showTab('amendments', this)">Amendments <span class="nav-badge" id="badge-amendments"></span></div>
+      <button class="nav-btn active" data-tab="session">Session</button>
+      <button class="nav-btn" data-tab="chits">
+        Chits
+        <span class="nav-count" id="del-count-chits"></span>
+      </button>
+      <button class="nav-btn" data-tab="documents">Documents</button>
+      <button class="nav-btn" data-tab="amendments">Amendments</button>
+      <button class="nav-btn" data-tab="motions">Motions</button>
     </nav>
-    <div class="sidebar-footer">
-      <div class="sidebar-name" id="del-country-display">—</div>
-      <div class="sidebar-cmte" id="del-code-display">—</div>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-info">
+        <span id="del-country-display">—</span>
+        <span id="del-code-display" class="sidebar-committee">—</span>
+      </div>
     </div>
   </aside>
 
-  <!-- MAIN -->
-  <main class="main-content">
-    <header class="topbar">
-      <div class="topbar-title" id="del-page-title">Session</div>
-      <div class="topbar-status"><span class="status-dot"></span> Connected</div>
+  <!-- MAIN CONTENT -->
+  <main class="main-area">
+
+    <header class="main-header">
+      <h1 class="main-title" id="del-main-title">Session</h1>
+      <div class="header-status">
+        <span class="status-dot" id="del-status-dot"></span>
+        <span id="del-status-text">Connected</span>
+      </div>
     </header>
 
+    <!-- CLOSED BANNER -->
+    <div class="closed-banner" id="del-closed-banner" style="display:none">
+      Room is currently closed — submissions are disabled
+    </div>
+
     <!-- SESSION TAB -->
-    <section class="tab-content active" id="tab-session">
+    <section class="tab-panel active" id="tab-session">
       <div class="two-col">
 
-        <div class="panel">
-          <div class="panel-header"><h3>Current speaker</h3></div>
-          <div class="speaker-display">
-            <div class="speaker-name" id="del-current-speaker">Waiting for chair...</div>
-            <div class="timer" id="del-timer">—</div>
-            <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap">
-              <button class="btn-outline" onclick="raisePoint('POI')">Raise POI</button>
-              <button class="btn-outline" onclick="raisePoint('POO')">Raise POO</button>
-              <button class="btn-outline" onclick="raisePoint('PPP')">Raise PPP</button>
+        <div class="card">
+          <div class="card-header"><h2>Current speaker</h2></div>
+          <div class="speaker-stage">
+            <div class="speaker-country" id="del-current-speaker">Waiting for chair...</div>
+            <div class="timer-display" id="del-timer">—</div>
+            <div class="points-btns">
+              <button class="btn-point" onclick="raisePoint('POI')">Raise POI</button>
+              <button class="btn-point" onclick="raisePoint('POO')">Raise POO</button>
+              <button class="btn-point" onclick="raisePoint('PPP')">Raise PPP</button>
             </div>
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-header"><h3>Speakers queue</h3></div>
-          <div class="list-area" id="del-speakers-queue">
-            <div class="empty-state">No speakers queued</div>
+        <div class="card">
+          <div class="card-header"><h2>Speakers queue</h2></div>
+          <div class="list-body" id="del-speakers-queue">
+            <div class="empty-msg">No speakers queued</div>
           </div>
         </div>
 
-      </div>
-
-      <div class="panel">
-        <div class="panel-header"><h3>Active motions</h3></div>
-        <div class="list-area" id="del-motions-display">
-          <div class="empty-state">No active motions</div>
-        </div>
       </div>
     </section>
 
     <!-- CHITS TAB -->
-    <section class="tab-content" id="tab-chits">
+    <section class="tab-panel" id="tab-chits">
       <div class="two-col">
 
-        <div class="panel">
-          <div class="panel-header"><h3>New chit</h3></div>
-          <div class="compose-area">
-            <select id="chit-recipient">
-              <option value="Chair">Chair</option>
-            </select>
+        <div class="card">
+          <div class="card-header"><h2>New chit</h2></div>
+          <div class="compose">
+            <select id="chit-recipient"></select>
             <textarea id="chit-text" placeholder="Write your message..." rows="4"></textarea>
-            <div class="chit-warning" id="chit-warning" style="display:none"></div>
-            <button class="btn-solid" onclick="sendChit()">Send</button>
+            <div class="profanity-warning" id="profanity-warning" style="display:none">
+              ⛔ Message blocked — inappropriate language
+            </div>
+            <button class="btn-primary submit-btn" id="send-chit-btn" onclick="sendChit()">Send</button>
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-header"><h3>Conversations</h3></div>
-          <div class="list-area" id="del-conversations">
-            <div class="empty-state">No messages yet</div>
+        <div class="card">
+          <div class="card-header"><h2>Conversations</h2></div>
+          <div class="list-body" id="conversations-list">
+            <div class="empty-msg">No messages yet</div>
           </div>
         </div>
 
       </div>
 
       <!-- Thread view -->
-      <div class="panel" id="thread-panel" style="margin-top:12px;display:none">
-        <div class="panel-header">
-          <h3 id="thread-title">Thread</h3>
-          <button class="btn-sm" onclick="closeThread()">✕ Close</button>
+      <div class="card thread-card" id="thread-card" style="display:none">
+        <div class="card-header">
+          <h2 id="thread-title">Thread</h2>
+          <button class="btn-secondary" onclick="closeThread()">Close</button>
         </div>
         <div class="thread-messages" id="thread-messages"></div>
         <div class="thread-reply">
-          <textarea id="thread-reply-text" placeholder="Reply..." rows="2"></textarea>
-          <button class="btn-solid" onclick="sendReply()">Reply</button>
+          <textarea id="reply-text" placeholder="Reply..." rows="2"></textarea>
+          <button class="btn-primary submit-btn" id="reply-btn" onclick="sendReply()">Reply</button>
         </div>
       </div>
     </section>
 
     <!-- DOCUMENTS TAB -->
-    <section class="tab-content" id="tab-documents">
+    <section class="tab-panel" id="tab-documents">
       <div class="two-col">
 
-        <div class="panel">
-          <div class="panel-header"><h3>Upload a document</h3></div>
-          <div class="compose-area">
+        <div class="card">
+          <div class="card-header"><h2>Upload document</h2></div>
+          <div class="compose">
             <select id="doc-type">
               <option value="Position Paper">Position Paper</option>
               <option value="Draft Resolution">Draft Resolution</option>
@@ -125,19 +136,20 @@
               <option value="Private Directive">Private Directive</option>
               <option value="Public Directive">Public Directive</option>
             </select>
-            <div class="file-upload-area">
-              <input type="file" id="doc-file" accept=".pdf" />
-              <label for="doc-file">Choose PDF file</label>
+            <div class="file-drop" id="file-drop">
+              <input type="file" id="doc-file" accept=".pdf" style="display:none">
+              <div class="file-drop-inner" onclick="document.getElementById('doc-file').click()">
+                <span id="file-label">Choose PDF file</span>
+              </div>
             </div>
-            <div class="ai-preview" id="doc-ai-preview" style="display:none"></div>
-            <button class="btn-solid" onclick="uploadDocument()">Submit Document</button>
+            <button class="btn-primary submit-btn" id="upload-btn" onclick="uploadDocument()">Submit</button>
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-header"><h3>My submissions</h3></div>
-          <div class="list-area" id="del-my-docs">
-            <div class="empty-state">No documents submitted</div>
+        <div class="card">
+          <div class="card-header"><h2>My submissions</h2></div>
+          <div class="list-body" id="my-documents">
+            <div class="empty-msg">Nothing submitted yet</div>
           </div>
         </div>
 
@@ -145,34 +157,68 @@
     </section>
 
     <!-- AMENDMENTS TAB -->
-    <section class="tab-content" id="tab-amendments">
-      <div class="panel">
-        <div class="panel-header"><h3>Submit an amendment</h3></div>
-        <div class="compose-area">
-          <input type="text" id="amend-resolution" placeholder="Resolution reference (e.g. BR/GER-01)" />
-          <input type="text" id="amend-clause" placeholder="Clause number (e.g. Operative clause 3)" />
-          <select id="amend-type">
-            <option value="Modify">Modify clause</option>
-            <option value="Add">Add clause</option>
-            <option value="Delete">Delete clause</option>
-          </select>
-          <textarea id="amend-text" placeholder="Proposed new text..." rows="4"></textarea>
-          <button class="btn-solid" onclick="submitAmendment()">Submit Amendment</button>
-        </div>
-      </div>
+    <section class="tab-panel" id="tab-amendments">
+      <div class="two-col">
 
-      <div class="panel" style="margin-top:12px">
-        <div class="panel-header"><h3>Submitted amendments</h3></div>
-        <div class="list-area" id="del-amendments-list">
-          <div class="empty-state">No amendments submitted</div>
+        <div class="card">
+          <div class="card-header"><h2>Submit amendment</h2></div>
+          <div class="compose">
+            <input type="text" id="amend-resolution" placeholder="Resolution reference (e.g. BR/GER-01)">
+            <input type="text" id="amend-clause" placeholder="Clause number">
+            <select id="amend-type">
+              <option value="Modify">Modify clause</option>
+              <option value="Add">Add clause</option>
+              <option value="Delete">Delete clause</option>
+            </select>
+            <textarea id="amend-text" placeholder="Proposed new text..." rows="3"></textarea>
+            <button class="btn-primary submit-btn" id="amend-btn" onclick="submitAmendment()">Submit</button>
+          </div>
         </div>
+
+        <div class="card">
+          <div class="card-header"><h2>My amendments</h2></div>
+          <div class="list-body" id="my-amendments">
+            <div class="empty-msg">No amendments submitted</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- MOTIONS TAB -->
+    <section class="tab-panel" id="tab-motions">
+      <div class="two-col">
+
+        <div class="card">
+          <div class="card-header"><h2>Submit motion</h2></div>
+          <div class="compose">
+            <select id="del-motion-type">
+              <option value="mod">Moderated Caucus</option>
+              <option value="unmod">Unmoderated Caucus</option>
+              <option value="challenge">Challenge</option>
+              <option value="suspension">Suspension of Debate</option>
+              <option value="adjourn">Adjournment</option>
+              <option value="extend">Extension of Speakers List</option>
+            </select>
+            <input type="text" id="del-motion-details" placeholder="Details (e.g. 10 min, 1 min speaking)">
+            <button class="btn-primary submit-btn" id="motion-btn" onclick="submitMotion()">Submit</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2>Active motions</h2></div>
+          <div class="list-body" id="del-motions-list">
+            <div class="empty-msg">No motions</div>
+          </div>
+        </div>
+
       </div>
     </section>
 
   </main>
 </div>
 
-<script type="module" src="/static/app.js"></script>
-<script type="module" src="/static/delegate.js"></script>
+<script src="/static/app.js" type="module"></script>
+<script src="/static/delegate.js" type="module"></script>
 </body>
 </html>
